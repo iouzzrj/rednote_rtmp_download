@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="rednote_rtmp_download.vcxproj" Id="7dc32a92-1b31-4f0e-99f1-db52cb311f69" />
+</Solution>
