@@ -211,22 +211,22 @@ namespace
 		return response;
 	}
 
-	std::optional<std::string> extract_room_id(const json& root)
-	{
-		const auto* dynamic_info_ptr = root.find("data");
-		if (!dynamic_info_ptr || !dynamic_info_ptr->is_object())
-		{
-			return std::nullopt;
-		}
+        std::optional<std::string> extract_room_id(const json& root)
+        {
+                const auto dynamic_info_it = root.find("data");
+                if (dynamic_info_it == root.end() || !dynamic_info_it->is_object())
+                {
+                        return std::nullopt;
+                }
 
-		const auto& dynamic_info = *dynamic_info_ptr;
-		const auto* host_info_ptr = dynamic_info.find("dynamic_host_info");
-		if (!host_info_ptr || !host_info_ptr->is_object())
-		{
-			return std::nullopt;
-		}
+                const auto& dynamic_info = *dynamic_info_it;
+                const auto host_info_it = dynamic_info.find("dynamic_host_info");
+                if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
+                {
+                        return std::nullopt;
+                }
 
-		const auto& host_info = *host_info_ptr;
+                const auto& host_info = *host_info_it;
 		if (host_info.contains("room_id"))
 		{
 			const auto& room_id_value = host_info.at("room_id");
@@ -243,15 +243,15 @@ namespace
 		// 有些响应可能把直播信息嵌入在 live_stream_info 字段里
 		if (host_info.contains("live_stream_info"))
 		{
-			const auto& live_stream_info = host_info.at("live_stream_info");
+                        const auto& live_stream_info = host_info.at("live_stream_info");
 			if (live_stream_info.is_string())
 			{
 				try
 				{
-					const auto nested = json::parse(live_stream_info.get<std::string>());
+                                        const auto nested = json::parse(live_stream_info.get<std::string>());
 					if (nested.contains("media") && nested.at("media").contains("room_id"))
 					{
-						const auto& room_id_value = nested.at("media").at("room_id");
+                                                const auto& room_id_value = nested.at("media").at("room_id");
 						if (room_id_value.is_number_integer())
 						{
 							return std::to_string(room_id_value.get<long long>());
@@ -272,22 +272,22 @@ namespace
 		return std::nullopt;
 	}
 
-	std::optional<std::string> extract_stream_url(const json& root)
-	{
-		const auto* data_ptr = root.find("data");
-		if (!data_ptr || !data_ptr->is_object())
-		{
-			return std::nullopt;
-		}
+        std::optional<std::string> extract_stream_url(const json& root)
+        {
+                const auto data_it = root.find("data");
+                if (data_it == root.end() || !data_it->is_object())
+                {
+                        return std::nullopt;
+                }
 
-		const auto& dynamic_info = *data_ptr;
-		const auto* host_info_ptr = dynamic_info.find("dynamic_host_info");
-		if (!host_info_ptr || !host_info_ptr->is_object())
-		{
-			return std::nullopt;
-		}
+                const auto& dynamic_info = *data_it;
+                const auto host_info_it = dynamic_info.find("dynamic_host_info");
+                if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
+                {
+                        return std::nullopt;
+                }
 
-		const auto& host_info = *host_info_ptr;
+                const auto& host_info = *host_info_it;
 
 		if (host_info.contains("live_stream_info"))
 		{
