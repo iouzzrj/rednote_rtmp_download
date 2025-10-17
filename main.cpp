@@ -22,29 +22,29 @@ using json = nlohmann::json;
 
 namespace
 {
-        struct HeaderConfig
-        {
-                std::string name;
-                std::string value;
-        };
+	struct HeaderConfig
+	{
+		std::string name;
+		std::string value;
+	};
 
-        struct RequestConfig
-        {
-                std::string base_url;
-                std::vector<HeaderConfig> headers;
-                long timeout_seconds = 30;
-        };
+	struct RequestConfig
+	{
+		std::string base_url;
+		std::vector<HeaderConfig> headers;
+		long timeout_seconds = 30;
+	};
 
-        struct RtmpConfig
-        {
-                std::string base_stream_url = "rtmp://live.xhscdn.com/live/";
-                fs::path downloads_root = fs::path{ "downloads" };
-                std::string filename_suffix = "_rtmp";
-                bool auto_download = true;
-                fs::path powershell_exe = "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
-                fs::path rtmpdump_exe = "C:/Program Files/RTMPDump/rtmpdump.exe";
-                std::vector<std::string> extra_args;
-        };
+	struct RtmpConfig
+	{
+		std::string base_stream_url = "rtmp://live.xhscdn.com/live/";
+		fs::path downloads_root = fs::path{ "downloads" };
+		std::string filename_suffix = "_rtmp";
+		bool auto_download = true;
+		fs::path powershell_exe = "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
+		fs::path rtmpdump_exe = "C:/Program Files/RTMPDump/rtmpdump.exe";
+		std::vector<std::string> extra_args;
+	};
 
 	struct Config
 	{
@@ -68,46 +68,46 @@ namespace
 		return buffer.str();
 	}
 
-        RequestConfig parse_request(const json& request_json)
-        {
-                RequestConfig request;
-                request.base_url = request_json.at("base_url").get<std::string>();
-                if (request_json.contains("timeout_seconds"))
-                {
-                        request.timeout_seconds = request_json.at("timeout_seconds").get<long>();
-                }
+	RequestConfig parse_request(const json& request_json)
+	{
+		RequestConfig request;
+		request.base_url = request_json.at("base_url").get<std::string>();
+		if (request_json.contains("timeout_seconds"))
+		{
+			request.timeout_seconds = request_json.at("timeout_seconds").get<long>();
+		}
 
-                if (request_json.contains("headers"))
-                {
-                        const auto& headers_json = request_json.at("headers");
-                        if (!headers_json.is_object())
-                        {
-                                throw std::runtime_error("配置文件中的 headers 字段必须是对象");
-                        }
+		if (request_json.contains("headers"))
+		{
+			const auto& headers_json = request_json.at("headers");
+			if (!headers_json.is_object())
+			{
+				throw std::runtime_error("配置文件中的 headers 字段必须是对象");
+			}
 
-                        for (const auto& [name, value_json] : headers_json.items())
-                        {
-                                HeaderConfig header;
-                                header.name = name;
-                                header.value = value_json.get<std::string>();
-                                request.headers.push_back(std::move(header));
-                        }
-                }
+			for (const auto& [name, value_json] : headers_json.items())
+			{
+				HeaderConfig header;
+				header.name = name;
+				header.value = value_json.get<std::string>();
+				request.headers.push_back(std::move(header));
+			}
+		}
 
-                return request;
-        }
+		return request;
+	}
 
 	RtmpConfig parse_rtmp(const json& rtmp_json)
 	{
-                RtmpConfig rtmp;
-                if (rtmp_json.contains("base_stream_url"))
-                {
-                        rtmp.base_stream_url = rtmp_json.at("base_stream_url").get<std::string>();
-                }
-                if (rtmp_json.contains("downloads_root"))
-                {
-                        rtmp.downloads_root = fs::path{ rtmp_json.at("downloads_root").get<std::string>() };
-                }
+		RtmpConfig rtmp;
+		if (rtmp_json.contains("base_stream_url"))
+		{
+			rtmp.base_stream_url = rtmp_json.at("base_stream_url").get<std::string>();
+		}
+		if (rtmp_json.contains("downloads_root"))
+		{
+			rtmp.downloads_root = fs::path{ rtmp_json.at("downloads_root").get<std::string>() };
+		}
 		if (rtmp_json.contains("filename_suffix"))
 		{
 			rtmp.filename_suffix = rtmp_json.at("filename_suffix").get<std::string>();
@@ -211,22 +211,22 @@ namespace
 		return response;
 	}
 
-        std::optional<std::string> extract_room_id(const json& root)
-        {
-                const auto dynamic_info_it = root.find("data");
-                if (dynamic_info_it == root.end() || !dynamic_info_it->is_object())
-                {
-                        return std::nullopt;
-                }
+	std::optional<std::string> extract_room_id(const json& root)
+	{
+		const auto dynamic_info_it = root.find("data");
+		if (dynamic_info_it == root.end() || !dynamic_info_it->is_object())
+		{
+			return std::nullopt;
+		}
 
-                const auto& dynamic_info = *dynamic_info_it;
-                const auto host_info_it = dynamic_info.find("dynamic_host_info");
-                if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
-                {
-                        return std::nullopt;
-                }
+		const auto& dynamic_info = *dynamic_info_it;
+		const auto host_info_it = dynamic_info.find("dynamic_host_info");
+		if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
+		{
+			return std::nullopt;
+		}
 
-                const auto& host_info = *host_info_it;
+		const auto& host_info = *host_info_it;
 		if (host_info.contains("room_id"))
 		{
 			const auto& room_id_value = host_info.at("room_id");
@@ -243,15 +243,15 @@ namespace
 		// 有些响应可能把直播信息嵌入在 live_stream_info 字段里
 		if (host_info.contains("live_stream_info"))
 		{
-                        const auto& live_stream_info = host_info.at("live_stream_info");
+			const auto& live_stream_info = host_info.at("live_stream_info");
 			if (live_stream_info.is_string())
 			{
 				try
 				{
-                                        const auto nested = json::parse(live_stream_info.get<std::string>());
+					const auto nested = json::parse(live_stream_info.get<std::string>());
 					if (nested.contains("media") && nested.at("media").contains("room_id"))
 					{
-                                                const auto& room_id_value = nested.at("media").at("room_id");
+						const auto& room_id_value = nested.at("media").at("room_id");
 						if (room_id_value.is_number_integer())
 						{
 							return std::to_string(room_id_value.get<long long>());
@@ -272,22 +272,22 @@ namespace
 		return std::nullopt;
 	}
 
-        std::optional<std::string> extract_stream_url(const json& root)
-        {
-                const auto data_it = root.find("data");
-                if (data_it == root.end() || !data_it->is_object())
-                {
-                        return std::nullopt;
-                }
+	std::optional<std::string> extract_stream_url(const json& root)
+	{
+		const auto data_it = root.find("data");
+		if (data_it == root.end() || !data_it->is_object())
+		{
+			return std::nullopt;
+		}
 
-                const auto& dynamic_info = *data_it;
-                const auto host_info_it = dynamic_info.find("dynamic_host_info");
-                if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
-                {
-                        return std::nullopt;
-                }
+		const auto& dynamic_info = *data_it;
+		const auto host_info_it = dynamic_info.find("dynamic_host_info");
+		if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
+		{
+			return std::nullopt;
+		}
 
-                const auto& host_info = *host_info_it;
+		const auto& host_info = *host_info_it;
 
 		if (host_info.contains("live_stream_info"))
 		{
