@@ -33,22 +33,27 @@ struct RequestConfig
 	long timeout_seconds = 30;
 };
 
-struct RtmpConfig
+struct DownloadConfig
 {
-	std::string base_stream_url = "rtmp://live.xhscdn.com/live/";
-	fs::path downloads_root = fs::path{ "downloads" };
-	std::string filename_suffix = "_rtmp";
-	bool auto_download = true;
-	fs::path powershell_exe = "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
-	fs::path rtmpdump_exe = "C:/Program Files/RTMPDump/rtmpdump.exe";
-	std::vector<std::string> extra_args;
+        std::string base_stream_url = "rtmp://live.xhscdn.com/live/";
+        fs::path downloads_root = fs::path{ "downloads" };
+        std::string filename_suffix = "_rtmp";
+};
+
+struct ProgramConfig
+{
+        bool auto_download = true;
+        fs::path powershell_exe = "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
+        fs::path rtmpdump_exe = "C:/Program Files/RTMPDump/rtmpdump.exe";
+        std::vector<std::string> extra_args = { "--live" };
 };
 
 struct Config
 {
-	std::string host_id;
-	RequestConfig request;
-	RtmpConfig rtmp;
+        std::string host_id;
+        RequestConfig request;
+        DownloadConfig download;
+        ProgramConfig programs;
 };
 
 std::string read_file(const fs::path& path)
@@ -95,53 +100,45 @@ RequestConfig parse_request(const json& request_json)
 	return request;
 }
 
-RtmpConfig parse_rtmp(const json& rtmp_json)
+ProgramConfig parse_programs(const json& programs_json)
 {
-	RtmpConfig rtmp;
-	if (rtmp_json.contains("base_stream_url"))
-	{
-		rtmp.base_stream_url = rtmp_json.at("base_stream_url").get<std::string>();
-	}
-	if (rtmp_json.contains("downloads_root"))
-	{
-		rtmp.downloads_root = fs::path{ rtmp_json.at("downloads_root").get<std::string>() };
-	}
-	if (rtmp_json.contains("filename_suffix"))
-	{
-		rtmp.filename_suffix = rtmp_json.at("filename_suffix").get<std::string>();
-	}
-	if (rtmp_json.contains("auto_download"))
-	{
-		rtmp.auto_download = rtmp_json.at("auto_download").get<bool>();
-	}
-	if (rtmp_json.contains("powershell_exe"))
-	{
-		rtmp.powershell_exe = fs::path{ rtmp_json.at("powershell_exe").get<std::string>() };
-	}
-	if (rtmp_json.contains("rtmpdump_exe"))
-	{
-		rtmp.rtmpdump_exe = fs::path{ rtmp_json.at("rtmpdump_exe").get<std::string>() };
-	}
-	if (rtmp_json.contains("extra_args"))
-	{
-		for (const auto& arg : rtmp_json.at("extra_args"))
-		{
-			rtmp.extra_args.push_back(arg.get<std::string>());
-		}
-	}
-	return rtmp;
+        if (!programs_json.is_object())
+        {
+                throw std::runtime_error("配置文件中的 programs 字段必须是对象");
+        }
+
+        ProgramConfig programs;
+
+        if (const auto it = programs_json.find("powershell_exe"); it != programs_json.end() && it->is_string())
+        {
+                programs.powershell_exe = fs::path{ it->get<std::string>() };
+        }
+        if (const auto it = programs_json.find("rtmpdump_exe"); it != programs_json.end() && it->is_string())
+        {
+                programs.rtmpdump_exe = fs::path{ it->get<std::string>() };
+        }
+
+        return programs;
 }
 
 Config parse_config(const fs::path& path)
 {
-	const auto file_content = read_file(path);
-	auto config_json = json::parse(file_content);
+        const auto file_content = read_file(path);
+        auto config_json = json::parse(file_content);
 
-	Config config;
-	config.host_id = config_json.at("host_id").get<std::string>();
-	config.request = parse_request(config_json.at("request"));
-	config.rtmp = parse_rtmp(config_json.at("rtmp"));
-	return config;
+        Config config;
+        config.host_id = config_json.at("host_id").get<std::string>();
+        config.request = parse_request(config_json.at("request"));
+        if (const auto it = config_json.find("programs"); it != config_json.end())
+        {
+                config.programs = parse_programs(*it);
+        }
+        else if (const auto it = config_json.find("rtmp"); it != config_json.end())
+        {
+                // 兼容旧配置字段
+                config.programs = parse_programs(*it);
+        }
+        return config;
 }
 
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
@@ -285,24 +282,24 @@ std::string today_folder_name()
 	return oss.str();
 }
 
-fs::path prepare_download_path(const RtmpConfig& rtmp_config, std::string_view room_id)
+fs::path prepare_download_path(const DownloadConfig& download_config, std::string_view room_id)
 {
-	fs::path download_dir = rtmp_config.downloads_root / today_folder_name();
-	fs::create_directories(download_dir);
+        fs::path download_dir = download_config.downloads_root / today_folder_name();
+        fs::create_directories(download_dir);
 
-	std::string filename = std::string(room_id) + rtmp_config.filename_suffix + ".flv";
-	fs::path candidate = download_dir / filename;
+        std::string filename = std::string(room_id) + download_config.filename_suffix + ".flv";
+        fs::path candidate = download_dir / filename;
 
-	int counter = 1;
-	while (fs::exists(candidate))
-	{
-		std::ostringstream oss;
-		oss << room_id << rtmp_config.filename_suffix << '_' << counter << ".flv";
-		candidate = download_dir / oss.str();
-		++counter;
-	}
+        int counter = 1;
+        while (fs::exists(candidate))
+        {
+                std::ostringstream oss;
+                oss << room_id << download_config.filename_suffix << '_' << counter << ".flv";
+                candidate = download_dir / oss.str();
+                ++counter;
+        }
 
-	return candidate;
+        return candidate;
 }
 
 std::string quote_argument(const fs::path& path)
@@ -347,62 +344,62 @@ std::string quote_argument(const std::string& arg)
 	return oss.str();
 }
 
-std::string build_powershell_command(const RtmpConfig& rtmp_config, const std::string& stream_url, const fs::path& output_path)
+std::string build_powershell_command(const ProgramConfig& program_config, const std::string& stream_url, const fs::path& output_path)
 {
-	std::ostringstream command;
-	command << quote_argument(rtmp_config.powershell_exe) << " -NoProfile -ExecutionPolicy Bypass -Command \"& { ";
-	command << "& " << quote_argument(rtmp_config.rtmpdump_exe) << ' ';
-	command << "-r " << quote_argument(stream_url) << ' ';
-	command << "-o " << quote_argument(output_path) << ' ';
-	for (const auto& arg : rtmp_config.extra_args)
-	{
-		command << quote_argument(arg) << ' ';
-	}
-	command << "}\"";
-	return command.str();
+        std::ostringstream command;
+        command << quote_argument(program_config.powershell_exe) << " -NoProfile -ExecutionPolicy Bypass -Command \"& { ";
+        command << "& " << quote_argument(program_config.rtmpdump_exe) << ' ';
+        command << "-r " << quote_argument(stream_url) << ' ';
+        command << "-o " << quote_argument(output_path) << ' ';
+        for (const auto& arg : program_config.extra_args)
+        {
+                command << quote_argument(arg) << ' ';
+        }
+        command << "}\"";
+        return command.str();
 }
 
 void trigger_rtmpdump(const Config& config, const std::string& stream_url, const std::string& room_id)
 {
-	const auto output_path = prepare_download_path(config.rtmp, room_id);
+        const auto output_path = prepare_download_path(config.download, room_id);
 
-	std::cout << "下载输出路径: " << output_path << '\n';
+        std::cout << "下载输出路径: " << output_path << '\n';
 
-	const auto command = build_powershell_command(config.rtmp, stream_url, output_path);
+        const auto command = build_powershell_command(config.programs, stream_url, output_path);
 
-	std::cout << "PowerShell 命令: " << command << '\n';
+        std::cout << "PowerShell 命令: " << command << '\n';
 
 #ifdef _WIN32
-	if (config.rtmp.auto_download)
-	{
-		std::cout << "开始调用 PowerShell 下载 RTMP 流...\n";
-		const int exit_code = std::system(command.c_str());
-		if (exit_code != 0)
-		{
-			std::cerr << "rtmpdump 执行失败，退出码: " << exit_code << '\n';
-		}
-	}
-	else
-	{
-		std::cout << "自动下载已禁用，请手动运行上述命令。\n";
-	}
+        if (config.programs.auto_download)
+        {
+                std::cout << "开始调用 PowerShell 下载 RTMP 流...\n";
+                const int exit_code = std::system(command.c_str());
+                if (exit_code != 0)
+                {
+                        std::cerr << "rtmpdump 执行失败，退出码: " << exit_code << '\n';
+                }
+        }
+        else
+        {
+                std::cout << "自动下载已禁用，请手动运行上述命令。\n";
+        }
 #else
-	(void)config;
-	(void)stream_url;
-	std::cout << "当前环境不是 Windows，已输出 PowerShell 命令供手动执行。\n";
+        (void)config;
+        (void)stream_url;
+        std::cout << "当前环境不是 Windows，已输出 PowerShell 命令供手动执行。\n";
 #endif
 }
 
 std::string build_rtmp_url(const Config& config, const std::string& room_id)
 {
-	std::ostringstream oss;
-	oss << config.rtmp.base_stream_url;
-	if (!config.rtmp.base_stream_url.empty() && config.rtmp.base_stream_url.back() != '/')
-	{
-		oss << '/';
-	}
-	oss << room_id;
-	return oss.str();
+        std::ostringstream oss;
+        oss << config.download.base_stream_url;
+        if (!config.download.base_stream_url.empty() && config.download.base_stream_url.back() != '/')
+        {
+                oss << '/';
+        }
+        oss << room_id;
+        return oss.str();
 }
 
 
