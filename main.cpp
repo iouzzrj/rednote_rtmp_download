@@ -166,6 +166,8 @@ std::string perform_request(const Config& config)
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, config.request.timeout_seconds);
+        // 允许 libcurl 自动解压 gzip/deflate 等压缩响应，避免读取到二进制数据
+        curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
 
         for (const auto& header : config.request.headers)
         {
