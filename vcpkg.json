@@ -1,7 +1,4 @@
 {
-  "name": "rednote-rtmp-download",
-  "version-string": "0.1.0",
-  "builtin-baseline": "a3d75f0de84520f6213b5636e33d7e6443da8932",
   "dependencies": [
     "curl",
     "nlohmann-json"
