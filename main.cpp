@@ -42,10 +42,7 @@ struct DownloadConfig
 
 struct ProgramConfig
 {
-	bool auto_download = true;
-	fs::path powershell_exe = "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
-	fs::path rtmpdump_exe = "C:/Program Files/RTMPDump/rtmpdump.exe";
-	std::vector<std::string> extra_args = { "--live" };
+        fs::path rtmpdump_exe = "C:/Program Files/RTMPDump/rtmpdump.exe";
 };
 
 struct Config
@@ -112,10 +109,6 @@ ProgramConfig parse_programs(const json& programs_json)
 
         ProgramConfig programs;
 
-        if (const auto it = programs_json.find("powershell_exe"); it != programs_json.end() && it->is_string())
-        {
-                programs.powershell_exe = fs::path{ it->get<std::string>() };
-        }
         if (const auto it = programs_json.find("rtmpdump_exe"); it != programs_json.end() && it->is_string())
         {
                 programs.rtmpdump_exe = fs::path{ it->get<std::string>() };
@@ -302,32 +295,6 @@ fs::path prepare_download_path(const DownloadConfig& download_config, std::strin
         return candidate;
 }
 
-std::string quote_argument(const fs::path& path)
-{
-        std::string arg = path.string();
-#ifdef _WIN32
-        for (auto& ch : arg)
-        {
-                if (ch == '\\')
-                {
-                        ch = '/';
-                }
-        }
-#endif
-        std::ostringstream oss;
-        oss << '"';
-        for (const auto ch : arg)
-        {
-                if (ch == '"')
-                {
-                        oss << '\\';
-                }
-                oss << ch;
-        }
-        oss << '"';
-        return oss.str();
-}
-
 std::string quote_argument(const std::string& arg)
 {
         std::ostringstream oss;
@@ -344,18 +311,18 @@ std::string quote_argument(const std::string& arg)
         return oss.str();
 }
 
-std::string build_powershell_command(const ProgramConfig& program_config, const std::string& stream_url, const fs::path& output_path)
+std::string quote_argument(const fs::path& path)
+{
+        return quote_argument(path.string());
+}
+
+std::string build_rtmpdump_command(const ProgramConfig& program_config, const std::string& stream_url, const fs::path& output_path)
 {
         std::ostringstream command;
-        command << quote_argument(program_config.powershell_exe) << " -NoProfile -ExecutionPolicy Bypass -Command \"& { ";
-        command << "& " << quote_argument(program_config.rtmpdump_exe) << ' ';
-        command << "-r " << quote_argument(stream_url) << ' ';
-        command << "-o " << quote_argument(output_path) << ' ';
-        for (const auto& arg : program_config.extra_args)
-        {
-                command << quote_argument(arg) << ' ';
-        }
-        command << "}\"";
+        command << quote_argument(program_config.rtmpdump_exe);
+        command << " -r " << quote_argument(stream_url);
+        command << " -o " << quote_argument(output_path);
+        command << " --live";
         return command.str();
 }
 
@@ -365,28 +332,18 @@ void trigger_rtmpdump(const Config& config, const std::string& stream_url, const
 
         std::cout << "下载输出路径: " << output_path << '\n';
 
-        const auto command = build_powershell_command(config.programs, stream_url, output_path);
-
-        std::cout << "PowerShell 命令: " << command << '\n';
+        const auto command = build_rtmpdump_command(config.programs, stream_url, output_path);
+        std::cout << "rtmpdump 命令: " << command << '\n';
 
 #ifdef _WIN32
-        if (config.programs.auto_download)
+        std::cout << "开始调用 rtmpdump 下载 RTMP 流...\n";
+        const int exit_code = std::system(command.c_str());
+        if (exit_code != 0)
         {
-                std::cout << "开始调用 PowerShell 下载 RTMP 流...\n";
-                const int exit_code = std::system(command.c_str());
-                if (exit_code != 0)
-                {
-                        std::cerr << "rtmpdump 执行失败，退出码: " << exit_code << '\n';
-                }
-        }
-        else
-        {
-                std::cout << "自动下载已禁用，请手动运行上述命令。\n";
+                std::cerr << "rtmpdump 执行失败，退出码: " << exit_code << '\n';
         }
 #else
-        (void)config;
-        (void)stream_url;
-        std::cout << "当前环境不是 Windows，已输出 PowerShell 命令供手动执行。\n";
+        std::cout << "当前环境不是 Windows，已输出 rtmpdump 命令供手动执行。\n";
 #endif
 }
 
