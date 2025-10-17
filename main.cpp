@@ -272,62 +272,6 @@ namespace
 		return std::nullopt;
 	}
 
-	std::optional<std::string> extract_stream_url(const json& root)
-	{
-		const auto data_it = root.find("data");
-		if (data_it == root.end() || !data_it->is_object())
-		{
-			return std::nullopt;
-		}
-
-		const auto& dynamic_info = *data_it;
-		const auto host_info_it = dynamic_info.find("dynamic_host_info");
-		if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
-		{
-			return std::nullopt;
-		}
-
-		const auto& host_info = *host_info_it;
-
-		if (host_info.contains("live_stream_info"))
-		{
-			const auto& live_stream_info = host_info.at("live_stream_info");
-			if (live_stream_info.is_string())
-			{
-				try
-				{
-					const auto nested = json::parse(live_stream_info.get<std::string>());
-					if (nested.contains("streams") && nested.at("streams").is_array())
-					{
-						const auto& streams = nested.at("streams");
-						for (const auto& stream : streams)
-						{
-							if (stream.contains("master_url"))
-							{
-								const auto& master_url = stream.at("master_url");
-								if (master_url.is_string())
-								{
-									return master_url.get<std::string>();
-								}
-							}
-						}
-					}
-				}
-				catch (const std::exception&)
-				{
-					// 如果解析失败，返回空，让调用方使用默认模板
-				}
-			}
-		}
-
-		if (host_info.contains("flvUrl") && host_info.at("flvUrl").is_string())
-		{
-			return host_info.at("flvUrl").get<std::string>();
-		}
-
-		return std::nullopt;
-	}
-
 	std::string today_folder_name()
 	{
 		const auto now = std::chrono::system_clock::now();
@@ -491,18 +435,10 @@ int main()
 
 		std::cout << "检测到直播间 room_id=" << *room_id << '\n';
 
-		auto stream_url = extract_stream_url(response_json);
-		if (!stream_url)
-		{
-			stream_url = build_fallback_rtmp_url(config, *room_id);
-			std::cout << "未从响应中找到播放链接，使用默认 RTMP 模板: " << *stream_url << '\n';
-		}
-		else
-		{
-			std::cout << "从响应中提取到播放链接: " << *stream_url << '\n';
-		}
+                const auto stream_url = build_fallback_rtmp_url(config, *room_id);
+                std::cout << "使用固定 RTMP 模板构建播放链接: " << stream_url << '\n';
 
-		trigger_rtmpdump(config, *stream_url, *room_id);
+                trigger_rtmpdump(config, stream_url, *room_id);
 	}
 	catch (const std::exception& ex)
 	{
