@@ -22,31 +22,29 @@ using json = nlohmann::json;
 
 namespace
 {
-	struct HeaderConfig
-	{
-		std::string name;
-		std::string value;
-		bool required = false;
-		std::optional<std::string> note;
-	};
+        struct HeaderConfig
+        {
+                std::string name;
+                std::string value;
+        };
 
-	struct RequestConfig
-	{
-		std::string base_url;
-		std::vector<HeaderConfig> headers;
-		long timeout_seconds = 30;
-	};
+        struct RequestConfig
+        {
+                std::string base_url;
+                std::vector<HeaderConfig> headers;
+                long timeout_seconds = 30;
+        };
 
-	struct RtmpConfig
-	{
-		std::string base_stream_url;
-		fs::path downloads_root;
-		std::string filename_suffix = "_rtmp";
-		bool auto_download = true;
-		fs::path powershell_exe = "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
-		fs::path rtmpdump_exe = "C:/Program Files/RTMPDump/rtmpdump.exe";
-		std::vector<std::string> extra_args;
-	};
+        struct RtmpConfig
+        {
+                std::string base_stream_url = "rtmp://live.xhscdn.com/live/";
+                fs::path downloads_root = fs::path{ "downloads" };
+                std::string filename_suffix = "_rtmp";
+                bool auto_download = true;
+                fs::path powershell_exe = "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
+                fs::path rtmpdump_exe = "C:/Program Files/RTMPDump/rtmpdump.exe";
+                std::vector<std::string> extra_args;
+        };
 
 	struct Config
 	{
@@ -70,50 +68,46 @@ namespace
 		return buffer.str();
 	}
 
-	HeaderConfig parse_header(const json& header_json)
-	{
-		HeaderConfig header;
-		header.name = header_json.at("name").get<std::string>();
-		header.value = header_json.at("value").get<std::string>();
-		if (header_json.contains("required"))
-		{
-			header.required = header_json.at("required").get<bool>();
-		}
-		if (header_json.contains("note"))
-		{
-			header.note = header_json.at("note").get<std::string>();
-		}
-		return header;
-	}
+        RequestConfig parse_request(const json& request_json)
+        {
+                RequestConfig request;
+                request.base_url = request_json.at("base_url").get<std::string>();
+                if (request_json.contains("timeout_seconds"))
+                {
+                        request.timeout_seconds = request_json.at("timeout_seconds").get<long>();
+                }
 
-	RequestConfig parse_request(const json& request_json)
-	{
-		RequestConfig request;
-		request.base_url = request_json.at("base_url").get<std::string>();
-		if (request_json.contains("timeout_seconds"))
-		{
-			request.timeout_seconds = request_json.at("timeout_seconds").get<long>();
-		}
+                if (request_json.contains("headers"))
+                {
+                        const auto& headers_json = request_json.at("headers");
+                        if (!headers_json.is_object())
+                        {
+                                throw std::runtime_error("配置文件中的 headers 字段必须是对象");
+                        }
 
-		if (request_json.contains("headers"))
-		{
-			for (const auto& header_json : request_json.at("headers"))
-			{
-				request.headers.push_back(parse_header(header_json));
-			}
-		}
+                        for (const auto& [name, value_json] : headers_json.items())
+                        {
+                                HeaderConfig header;
+                                header.name = name;
+                                header.value = value_json.get<std::string>();
+                                request.headers.push_back(std::move(header));
+                        }
+                }
 
-		return request;
-	}
+                return request;
+        }
 
 	RtmpConfig parse_rtmp(const json& rtmp_json)
 	{
-		RtmpConfig rtmp;
-		rtmp.base_stream_url = rtmp_json.at("base_stream_url").get<std::string>();
-		if (rtmp_json.contains("downloads_root"))
-		{
-			rtmp.downloads_root = fs::path{ rtmp_json.at("downloads_root").get<std::string>() };
-		}
+                RtmpConfig rtmp;
+                if (rtmp_json.contains("base_stream_url"))
+                {
+                        rtmp.base_stream_url = rtmp_json.at("base_stream_url").get<std::string>();
+                }
+                if (rtmp_json.contains("downloads_root"))
+                {
+                        rtmp.downloads_root = fs::path{ rtmp_json.at("downloads_root").get<std::string>() };
+                }
 		if (rtmp_json.contains("filename_suffix"))
 		{
 			rtmp.filename_suffix = rtmp_json.at("filename_suffix").get<std::string>();
