@@ -133,11 +133,6 @@ Config parse_config(const fs::path& path)
         {
                 config.programs = parse_programs(*it);
         }
-        else if (const auto it = config_json.find("rtmp"); it != config_json.end())
-        {
-                // 兼容旧配置字段
-                config.programs = parse_programs(*it);
-        }
         return config;
 }
 
