@@ -56,346 +56,351 @@ struct Config
 	ProgramConfig programs;
 };
 
+namespace
+{
+
 std::string read_file(const fs::path& path)
 {
-	std::ifstream input(path, std::ios::binary);
-	if (!input)
-	{
-		std::ostringstream oss;
-		oss << "无法打开配置文件: " << path;
-		throw std::runtime_error(oss.str());
-	}
+        std::ifstream input(path, std::ios::binary);
+        if (!input)
+        {
+                std::ostringstream oss;
+                oss << "无法打开配置文件: " << path;
+                throw std::runtime_error(oss.str());
+        }
 
-	std::ostringstream buffer;
-	buffer << input.rdbuf();
-	return buffer.str();
+        std::ostringstream buffer;
+        buffer << input.rdbuf();
+        return buffer.str();
 }
 
 RequestConfig parse_request(const json& request_json)
 {
-	RequestConfig request;
-	request.base_url = request_json.at("base_url").get<std::string>();
-	if (request_json.contains("timeout_seconds"))
-	{
-		request.timeout_seconds = request_json.at("timeout_seconds").get<long>();
-	}
+        RequestConfig request;
+        request.base_url = request_json.at("base_url").get<std::string>();
+        if (request_json.contains("timeout_seconds"))
+        {
+                request.timeout_seconds = request_json.at("timeout_seconds").get<long>();
+        }
 
-	if (request_json.contains("headers"))
-	{
-		const auto& headers_json = request_json.at("headers");
-		if (!headers_json.is_object())
-		{
-			throw std::runtime_error("配置文件中的 headers 字段必须是对象");
-		}
+        if (request_json.contains("headers"))
+        {
+                const auto& headers_json = request_json.at("headers");
+                if (!headers_json.is_object())
+                {
+                        throw std::runtime_error("配置文件中的 headers 字段必须是对象");
+                }
 
-		for (const auto& [name, value_json] : headers_json.items())
-		{
-			HeaderConfig header;
-			header.name = name;
-			header.value = value_json.get<std::string>();
-			request.headers.push_back(std::move(header));
-		}
-	}
+                for (const auto& [name, value_json] : headers_json.items())
+                {
+                        HeaderConfig header;
+                        header.name = name;
+                        header.value = value_json.get<std::string>();
+                        request.headers.push_back(std::move(header));
+                }
+        }
 
-	return request;
+        return request;
 }
 
 ProgramConfig parse_programs(const json& programs_json)
 {
-	if (!programs_json.is_object())
-	{
-		throw std::runtime_error("配置文件中的 programs 字段必须是对象");
-	}
+        if (!programs_json.is_object())
+        {
+                throw std::runtime_error("配置文件中的 programs 字段必须是对象");
+        }
 
-	ProgramConfig programs;
+        ProgramConfig programs;
 
-	if (const auto it = programs_json.find("powershell_exe"); it != programs_json.end() && it->is_string())
-	{
-		programs.powershell_exe = fs::path{ it->get<std::string>() };
-	}
-	if (const auto it = programs_json.find("rtmpdump_exe"); it != programs_json.end() && it->is_string())
-	{
-		programs.rtmpdump_exe = fs::path{ it->get<std::string>() };
-	}
+        if (const auto it = programs_json.find("powershell_exe"); it != programs_json.end() && it->is_string())
+        {
+                programs.powershell_exe = fs::path{ it->get<std::string>() };
+        }
+        if (const auto it = programs_json.find("rtmpdump_exe"); it != programs_json.end() && it->is_string())
+        {
+                programs.rtmpdump_exe = fs::path{ it->get<std::string>() };
+        }
 
-	return programs;
+        return programs;
 }
 
 Config parse_config(const fs::path& path)
 {
-	const auto file_content = read_file(path);
-	auto config_json = json::parse(file_content);
+        const auto file_content = read_file(path);
+        auto config_json = json::parse(file_content);
 
-	Config config;
-	config.host_id = config_json.at("host_id").get<std::string>();
-	config.request = parse_request(config_json.at("request"));
-	if (const auto it = config_json.find("programs"); it != config_json.end())
-	{
-		config.programs = parse_programs(*it);
-	}
-	return config;
+        Config config;
+        config.host_id = config_json.at("host_id").get<std::string>();
+        config.request = parse_request(config_json.at("request"));
+        if (const auto it = config_json.find("programs"); it != config_json.end())
+        {
+                config.programs = parse_programs(*it);
+        }
+        return config;
 }
 
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
 {
-	auto* stream = static_cast<std::string*>(userdata);
-	const auto count = size * nmemb;
-	stream->append(ptr, count);
-	return count;
+        auto* stream = static_cast<std::string*>(userdata);
+        const auto count = size * nmemb;
+        stream->append(ptr, count);
+        return count;
 }
 
 std::string perform_request(const Config& config)
 {
-	CURL* curl = curl_easy_init();
-	if (!curl)
-	{
-		throw std::runtime_error("无法初始化 libcurl");
-	}
+        CURL* curl = curl_easy_init();
+        if (!curl)
+        {
+                throw std::runtime_error("无法初始化 libcurl");
+        }
 
-	std::string response;
-	struct curl_slist* headers = nullptr;
+        std::string response;
+        struct curl_slist* headers = nullptr;
 
-	std::ostringstream url_stream;
-	url_stream << config.request.base_url << "?host_id=" << curl_easy_escape(curl, config.host_id.c_str(), 0);
-	const auto url = url_stream.str();
+        std::ostringstream url_stream;
+        url_stream << config.request.base_url << "?host_id=" << curl_easy_escape(curl, config.host_id.c_str(), 0);
+        const auto url = url_stream.str();
 
-	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, config.request.timeout_seconds);
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, config.request.timeout_seconds);
 
-	for (const auto& header : config.request.headers)
-	{
-		std::ostringstream header_stream;
-		header_stream << header.name << ": " << header.value;
-		headers = curl_slist_append(headers, header_stream.str().c_str());
-	}
+        for (const auto& header : config.request.headers)
+        {
+                std::ostringstream header_stream;
+                header_stream << header.name << ": " << header.value;
+                headers = curl_slist_append(headers, header_stream.str().c_str());
+        }
 
-	if (headers)
-	{
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	}
+        if (headers)
+        {
+                curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        }
 
-	const auto res = curl_easy_perform(curl);
-	if (res != CURLE_OK)
-	{
-		std::ostringstream error;
-		error << "HTTP 请求失败: " << curl_easy_strerror(res);
-		curl_slist_free_all(headers);
-		curl_easy_cleanup(curl);
-		throw std::runtime_error(error.str());
-	}
+        const auto res = curl_easy_perform(curl);
+        if (res != CURLE_OK)
+        {
+                std::ostringstream error;
+                error << "HTTP 请求失败: " << curl_easy_strerror(res);
+                curl_slist_free_all(headers);
+                curl_easy_cleanup(curl);
+                throw std::runtime_error(error.str());
+        }
 
-	long status_code = 0;
-	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status_code);
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
+        long status_code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status_code);
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
 
-	if (status_code != 200)
-	{
-		std::ostringstream error;
-		error << "HTTP 响应状态码异常: " << status_code;
-		throw std::runtime_error(error.str());
-	}
+        if (status_code != 200)
+        {
+                std::ostringstream error;
+                error << "HTTP 响应状态码异常: " << status_code;
+                throw std::runtime_error(error.str());
+        }
 
-	return response;
+        return response;
 }
 
 std::optional<std::string> extract_room_id(const json& root)
 {
-	const auto dynamic_info_it = root.find("data");
-	if (dynamic_info_it == root.end() || !dynamic_info_it->is_object())
-	{
-		return std::nullopt;
-	}
+        const auto dynamic_info_it = root.find("data");
+        if (dynamic_info_it == root.end() || !dynamic_info_it->is_object())
+        {
+                return std::nullopt;
+        }
 
-	const auto& dynamic_info = *dynamic_info_it;
-	const auto host_info_it = dynamic_info.find("dynamic_host_info");
-	if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
-	{
-		return std::nullopt;
-	}
+        const auto& dynamic_info = *dynamic_info_it;
+        const auto host_info_it = dynamic_info.find("dynamic_host_info");
+        if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
+        {
+                return std::nullopt;
+        }
 
-	const auto& host_info = *host_info_it;
-	if (host_info.contains("room_id"))
-	{
-		const auto& room_id_value = host_info.at("room_id");
-		if (room_id_value.is_number_integer())
-		{
-			return std::to_string(room_id_value.get<long long>());
-		}
-		if (room_id_value.is_string())
-		{
-			return room_id_value.get<std::string>();
-		}
-	}
+        const auto& host_info = *host_info_it;
+        if (host_info.contains("room_id"))
+        {
+                const auto& room_id_value = host_info.at("room_id");
+                if (room_id_value.is_number_integer())
+                {
+                        return std::to_string(room_id_value.get<long long>());
+                }
+                if (room_id_value.is_string())
+                {
+                        return room_id_value.get<std::string>();
+                }
+        }
 
-	// 有些响应可能把直播信息嵌入在 live_stream_info 字段里
-	if (host_info.contains("live_stream_info"))
-	{
-		const auto& live_stream_info = host_info.at("live_stream_info");
-		if (live_stream_info.is_string())
-		{
-			try
-			{
-				const auto nested = json::parse(live_stream_info.get<std::string>());
-				if (nested.contains("media") && nested.at("media").contains("room_id"))
-				{
-					const auto& room_id_value = nested.at("media").at("room_id");
-					if (room_id_value.is_number_integer())
-					{
-						return std::to_string(room_id_value.get<long long>());
-					}
-					if (room_id_value.is_string())
-					{
-						return room_id_value.get<std::string>();
-					}
-				}
-			}
-			catch (const std::exception&)
-			{
-				// 忽略解析错误，继续尝试其它字段
-			}
-		}
-	}
+        // 有些响应可能把直播信息嵌入在 live_stream_info 字段里
+        if (host_info.contains("live_stream_info"))
+        {
+                const auto& live_stream_info = host_info.at("live_stream_info");
+                if (live_stream_info.is_string())
+                {
+                        try
+                        {
+                                const auto nested = json::parse(live_stream_info.get<std::string>());
+                                if (nested.contains("media") && nested.at("media").contains("room_id"))
+                                {
+                                        const auto& room_id_value = nested.at("media").at("room_id");
+                                        if (room_id_value.is_number_integer())
+                                        {
+                                                return std::to_string(room_id_value.get<long long>());
+                                        }
+                                        if (room_id_value.is_string())
+                                        {
+                                                return room_id_value.get<std::string>();
+                                        }
+                                }
+                        }
+                        catch (const std::exception&)
+                        {
+                                // 忽略解析错误，继续尝试其它字段
+                        }
+                }
+        }
 
-	return std::nullopt;
+        return std::nullopt;
 }
 
 std::string today_folder_name()
 {
-	const auto now = std::chrono::system_clock::now();
-	const auto time = std::chrono::system_clock::to_time_t(now);
-	std::tm tm{};
+        const auto now = std::chrono::system_clock::now();
+        const auto time = std::chrono::system_clock::to_time_t(now);
+        std::tm tm{};
 #ifdef _WIN32
-	localtime_s(&tm, &time);
+        localtime_s(&tm, &time);
 #else
-	localtime_r(&time, &tm);
+        localtime_r(&time, &tm);
 #endif
-	std::ostringstream oss;
-	oss << std::put_time(&tm, "%Y%m%d");
-	return oss.str();
+        std::ostringstream oss;
+        oss << std::put_time(&tm, "%Y%m%d");
+        return oss.str();
 }
 
 fs::path prepare_download_path(const DownloadConfig& download_config, std::string_view room_id)
 {
-	fs::path download_dir = download_config.downloads_root / today_folder_name();
-	fs::create_directories(download_dir);
+        fs::path download_dir = download_config.downloads_root / today_folder_name();
+        fs::create_directories(download_dir);
 
-	std::string filename = std::string(room_id) + download_config.filename_suffix + ".flv";
-	fs::path candidate = download_dir / filename;
+        std::string filename = std::string(room_id) + download_config.filename_suffix + ".flv";
+        fs::path candidate = download_dir / filename;
 
-	int counter = 1;
-	while (fs::exists(candidate))
-	{
-		std::ostringstream oss;
-		oss << room_id << download_config.filename_suffix << '_' << counter << ".flv";
-		candidate = download_dir / oss.str();
-		++counter;
-	}
+        int counter = 1;
+        while (fs::exists(candidate))
+        {
+                std::ostringstream oss;
+                oss << room_id << download_config.filename_suffix << '_' << counter << ".flv";
+                candidate = download_dir / oss.str();
+                ++counter;
+        }
 
-	return candidate;
+        return candidate;
 }
 
 std::string quote_argument(const fs::path& path)
 {
-	std::string arg = path.string();
+        std::string arg = path.string();
 #ifdef _WIN32
-	for (auto& ch : arg)
-	{
-		if (ch == '\\')
-		{
-			ch = '/';
-		}
-	}
+        for (auto& ch : arg)
+        {
+                if (ch == '\\')
+                {
+                        ch = '/';
+                }
+        }
 #endif
-	std::ostringstream oss;
-	oss << '"';
-	for (const auto ch : arg)
-	{
-		if (ch == '"')
-		{
-			oss << '\\';
-		}
-		oss << ch;
-	}
-	oss << '"';
-	return oss.str();
+        std::ostringstream oss;
+        oss << '"';
+        for (const auto ch : arg)
+        {
+                if (ch == '"')
+                {
+                        oss << '\\';
+                }
+                oss << ch;
+        }
+        oss << '"';
+        return oss.str();
 }
 
 std::string quote_argument(const std::string& arg)
 {
-	std::ostringstream oss;
-	oss << '"';
-	for (const auto ch : arg)
-	{
-		if (ch == '"')
-		{
-			oss << '\\';
-		}
-		oss << ch;
-	}
-	oss << '"';
-	return oss.str();
+        std::ostringstream oss;
+        oss << '"';
+        for (const auto ch : arg)
+        {
+                if (ch == '"')
+                {
+                        oss << '\\';
+                }
+                oss << ch;
+        }
+        oss << '"';
+        return oss.str();
 }
 
 std::string build_powershell_command(const ProgramConfig& program_config, const std::string& stream_url, const fs::path& output_path)
 {
-	std::ostringstream command;
-	command << quote_argument(program_config.powershell_exe) << " -NoProfile -ExecutionPolicy Bypass -Command \"& { ";
-	command << "& " << quote_argument(program_config.rtmpdump_exe) << ' ';
-	command << "-r " << quote_argument(stream_url) << ' ';
-	command << "-o " << quote_argument(output_path) << ' ';
-	for (const auto& arg : program_config.extra_args)
-	{
-		command << quote_argument(arg) << ' ';
-	}
-	command << "}\"";
-	return command.str();
+        std::ostringstream command;
+        command << quote_argument(program_config.powershell_exe) << " -NoProfile -ExecutionPolicy Bypass -Command \"& { ";
+        command << "& " << quote_argument(program_config.rtmpdump_exe) << ' ';
+        command << "-r " << quote_argument(stream_url) << ' ';
+        command << "-o " << quote_argument(output_path) << ' ';
+        for (const auto& arg : program_config.extra_args)
+        {
+                command << quote_argument(arg) << ' ';
+        }
+        command << "}\"";
+        return command.str();
 }
 
 void trigger_rtmpdump(const Config& config, const std::string& stream_url, const std::string& room_id)
 {
-	const auto output_path = prepare_download_path(config.download, room_id);
+        const auto output_path = prepare_download_path(config.download, room_id);
 
-	std::cout << "下载输出路径: " << output_path << '\n';
+        std::cout << "下载输出路径: " << output_path << '\n';
 
-	const auto command = build_powershell_command(config.programs, stream_url, output_path);
+        const auto command = build_powershell_command(config.programs, stream_url, output_path);
 
-	std::cout << "PowerShell 命令: " << command << '\n';
+        std::cout << "PowerShell 命令: " << command << '\n';
 
 #ifdef _WIN32
-	if (config.programs.auto_download)
-	{
-		std::cout << "开始调用 PowerShell 下载 RTMP 流...\n";
-		const int exit_code = std::system(command.c_str());
-		if (exit_code != 0)
-		{
-			std::cerr << "rtmpdump 执行失败，退出码: " << exit_code << '\n';
-		}
-	}
-	else
-	{
-		std::cout << "自动下载已禁用，请手动运行上述命令。\n";
-	}
+        if (config.programs.auto_download)
+        {
+                std::cout << "开始调用 PowerShell 下载 RTMP 流...\n";
+                const int exit_code = std::system(command.c_str());
+                if (exit_code != 0)
+                {
+                        std::cerr << "rtmpdump 执行失败，退出码: " << exit_code << '\n';
+                }
+        }
+        else
+        {
+                std::cout << "自动下载已禁用，请手动运行上述命令。\n";
+        }
 #else
-	(void)config;
-	(void)stream_url;
-	std::cout << "当前环境不是 Windows，已输出 PowerShell 命令供手动执行。\n";
+        (void)config;
+        (void)stream_url;
+        std::cout << "当前环境不是 Windows，已输出 PowerShell 命令供手动执行。\n";
 #endif
 }
 
 std::string build_rtmp_url(const Config& config, const std::string& room_id)
 {
-	std::ostringstream oss;
-	oss << config.download.base_stream_url;
-	if (!config.download.base_stream_url.empty() && config.download.base_stream_url.back() != '/')
-	{
-		oss << '/';
-	}
-	oss << room_id;
-	return oss.str();
+        std::ostringstream oss;
+        oss << config.download.base_stream_url;
+        if (!config.download.base_stream_url.empty() && config.download.base_stream_url.back() != '/')
+        {
+                oss << '/';
+        }
+        oss << room_id;
+        return oss.str();
 }
+
+} // namespace
 
 
 int main()
