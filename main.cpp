@@ -395,7 +395,7 @@ namespace
 #endif
 	}
 
-	std::string build_fallback_rtmp_url(const Config& config, const std::string& room_id)
+	std::string build_rtmp_url(const Config& config, const std::string& room_id)
 	{
 		std::ostringstream oss;
 		oss << config.rtmp.base_stream_url;
@@ -435,10 +435,10 @@ int main()
 
 		std::cout << "检测到直播间 room_id=" << *room_id << '\n';
 
-                const auto stream_url = build_fallback_rtmp_url(config, *room_id);
-                std::cout << "使用固定 RTMP 模板构建播放链接: " << stream_url << '\n';
+		const auto stream_url = build_rtmp_url(config, *room_id);
+		std::cout << "使用固定 RTMP 模板构建播放链接: " << stream_url << '\n';
 
-                trigger_rtmpdump(config, stream_url, *room_id);
+		trigger_rtmpdump(config, stream_url, *room_id);
 	}
 	catch (const std::exception& ex)
 	{
