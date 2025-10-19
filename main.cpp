@@ -46,12 +46,19 @@ struct ProgramConfig
 	fs::path rtmpdump_exe = "C:/Program Files/RTMPDump/rtmpdump.exe";
 };
 
+struct TestModeConfig
+{
+        bool enabled = false;
+        std::string fake_room_id;
+};
+
 struct Config
 {
-	std::string host_id;
-	RequestConfig request;
-	DownloadConfig download;
-	ProgramConfig programs;
+        std::string host_id;
+        RequestConfig request;
+        DownloadConfig download;
+        ProgramConfig programs;
+        TestModeConfig test_mode;
 };
 
 namespace
@@ -101,22 +108,42 @@ namespace
 		return request;
 	}
 
-	ProgramConfig parse_programs(const json& programs_json)
-	{
-		if (!programs_json.is_object())
-		{
-			throw std::runtime_error("配置文件中的 programs 字段必须是对象");
-		}
+        ProgramConfig parse_programs(const json& programs_json)
+        {
+                if (!programs_json.is_object())
+                {
+                        throw std::runtime_error("配置文件中的 programs 字段必须是对象");
+                }
 
-		ProgramConfig programs;
+                ProgramConfig programs;
 
-		if (const auto it = programs_json.find("rtmpdump_exe"); it != programs_json.end() && it->is_string())
-		{
-			programs.rtmpdump_exe = fs::path{ it->get<std::string>() };
-		}
+                if (const auto it = programs_json.find("rtmpdump_exe"); it != programs_json.end() && it->is_string())
+                {
+                        programs.rtmpdump_exe = fs::path{ it->get<std::string>() };
+                }
 
-		return programs;
-	}
+                return programs;
+        }
+
+        TestModeConfig parse_test_mode(const json& test_mode_json)
+        {
+                if (!test_mode_json.is_object())
+                {
+                        throw std::runtime_error("配置文件中的 test_mode 字段必须是对象");
+                }
+
+                TestModeConfig test_mode;
+                if (const auto it = test_mode_json.find("enabled"); it != test_mode_json.end())
+                {
+                        test_mode.enabled = it->get<bool>();
+                }
+                if (const auto it = test_mode_json.find("fake_room_id"); it != test_mode_json.end())
+                {
+                        test_mode.fake_room_id = it->get<std::string>();
+                }
+
+                return test_mode;
+        }
 
 	Config parse_config(const fs::path& path)
 	{
@@ -124,14 +151,18 @@ namespace
 		auto config_json = json::parse(file_content);
 
 		Config config;
-		config.host_id = config_json.at("host_id").get<std::string>();
-		config.request = parse_request(config_json.at("request"));
-		if (const auto it = config_json.find("programs"); it != config_json.end())
-		{
-			config.programs = parse_programs(*it);
-		}
-		return config;
-	}
+                config.host_id = config_json.at("host_id").get<std::string>();
+                config.request = parse_request(config_json.at("request"));
+                if (const auto it = config_json.find("programs"); it != config_json.end())
+                {
+                        config.programs = parse_programs(*it);
+                }
+                if (const auto it = config_json.find("test_mode"); it != config_json.end())
+                {
+                        config.test_mode = parse_test_mode(*it);
+                }
+                return config;
+        }
 
 	size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
 	{
@@ -371,28 +402,43 @@ int main()
 #endif
 	try
 	{
-		const Config config = parse_config("config.json");
-		std::cout << "使用 host_id: " << config.host_id << '\n';
+                const Config config = parse_config("config.json");
 
-		const auto response = perform_request(config);
-		std::cout << "HTTP 响应原始内容: " << response << '\n';
+                if (config.test_mode.enabled)
+                {
+                        if (config.test_mode.fake_room_id.empty())
+                        {
+                                throw std::runtime_error("测试模式启用但未提供 fake_room_id");
+                        }
 
-		const auto response_json = json::parse(response);
-		const auto room_id = extract_room_id(response_json);
+                        std::cout << "测试模式已启用，使用假 room_id=" << config.test_mode.fake_room_id << '\n';
+                        const auto stream_url = build_rtmp_url(config, config.test_mode.fake_room_id);
+                        std::cout << "测试模式构建的 RTMP 链接: " << stream_url << '\n';
+                        trigger_rtmpdump(config, stream_url, config.test_mode.fake_room_id);
+                        return 0;
+                }
 
-		if (!room_id)
-		{
-			std::cout << "当前主播没有直播间。\n";
-			return 0;
-		}
+                std::cout << "使用 host_id: " << config.host_id << '\n';
 
-		std::cout << "检测到直播间 room_id=" << *room_id << '\n';
+                const auto response = perform_request(config);
+                std::cout << "HTTP 响应原始内容: " << response << '\n';
 
-		const auto stream_url = build_rtmp_url(config, *room_id);
-		std::cout << "使用固定 RTMP 模板构建播放链接: " << stream_url << '\n';
+                const auto response_json = json::parse(response);
+                const auto room_id = extract_room_id(response_json);
 
-		trigger_rtmpdump(config, stream_url, *room_id);
-	}
+                if (!room_id)
+                {
+                        std::cout << "当前主播没有直播间。\n";
+                        return 0;
+                }
+
+                std::cout << "检测到直播间 room_id=" << *room_id << '\n';
+
+                const auto stream_url = build_rtmp_url(config, *room_id);
+                std::cout << "使用固定 RTMP 模板构建播放链接: " << stream_url << '\n';
+
+                trigger_rtmpdump(config, stream_url, *room_id);
+        }
 	catch (const std::exception& ex)
 	{
 		std::cerr << "程序异常: " << ex.what() << '\n';
