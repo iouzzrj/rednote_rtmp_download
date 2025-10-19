@@ -1,26 +1,25 @@
 {
-  "host_id": "5c0a4fb10000000006012fde",
-
+  "host_id": "5b687ad9c39aaf000120eb98",
   "request": {
     "base_url": "https://live-mall.xiaohongshu.com/api/sns/red/livemall/app/dynamic/host/info",
     "headers": {
-      "Host": "live-mall.xiaohongshu.com",
+      "host": "live-mall.xiaohongshu.com",
       "xy-direction": "2",
-      "x-b3-traceid": "2f2f0c983a1e0c0f",
+      "x-b3-traceid": "a5a591c7d3190200",
+      "x-xray-traceid": "ccf6e3e2cd721ac95cddb61e303ab50e",
       "xy-scene": "fs=0&point=789",
-      "xy-common-params": "fid=17551017151098354944b753319f4dbc9ed5a0f718ae&gid=7cf0f9164364543d0eb196ae0a20ce0a43cea8f94735904177319cc9&device_model=phone&tz=Asia%2FShanghai&channel=jlight&versionName=8.96.0&deviceId=c90c36d9-e241-3a36-9452-e9b6507ab5c2&platform=android&sid=session.1757063893546502696766&identifier_flag=4&project_id=ECFAAF&x_trace_page_current=user_page&lang=zh-Hans&app_id=ECFAAF01&uis=light&teenager=0&active_ctry=CN&cpu_name=qcom&dlang=zh&data_ctry=CN&SUE=1&launch_id=1760695248&origin_channel=jlight&overseas_channel=0&mlanguage=zh_cn&folder_type=none&auto_trans=0&t=1760719374&build=8960817&holder_ctry=CN&did=5e040bd8d68c455a94fb963f2b18e622",
-      "shield": "XYAAQAAwAAAAEAAABTAAAAUzUWEe0xG1IbD9/c+qCLOlKGmTtFa+lG434HeuFeRaoRzITjnbAzRZ2t/eRez8N738t+2KY3EgwbGDeOYbvzjXll1ea46ow19yPVg/3cDJ6fJxUC",
-      "xy-platform-info": "platform=android&build=8960817&deviceId=c90c36d9-e241-3a36-9452-e9b6507ab5c2",
-      "x-xray-traceid": "ccf986c98176f69637e1204beebf8fb9",
       "x-legacy-did": "c90c36d9-e241-3a36-9452-e9b6507ab5c2",
       "x-legacy-fid": "17551017151098354944b753319f4dbc9ed5a0f718ae",
       "x-legacy-sid": "session.1757063893546502696766",
-      "x-mini-gid": "7cf0f9164364543d0eb196ae0a20ce0a43cea8f94735904177319cc9",
-      "x-mini-s1": "AMUHAAABZucij/AUYm46cUJUXqouKR/y7tXA4ZENV1AsHfo+DppTDUCgGrOpDFDY2cKuJTczSKf5jlYXops=",
-      "x-mini-sig": "588b9ccabb3c94e571f680039ed66ec2c0ced17a084c48e0e3241f690ffb3da2",
-      "x-mini-mua": "eyJhIjoiRUNGQUFGMDEiLCJjIjoxOTg5LCJrIjoiN2MxNGE5ZGY3MzQwMzI4NjQ0ZThiNjFmYTc1OWRhYzM2YjRjNTM5Njg0NzEyZWUwZmU0NzAwZjQyNDAxNWYwYyIsInAiOiJhIiwicyI6IjM4NjQ1MjMwMjVmMjQxNDAwYzgwNTg5MmI3YWZlOWZiMmJlZTBhN2YwOWVmNmE3ZDk4OTdmNjcyMTNhMjE0YzZhMjcxYTg2MGExOTYyZWIwMjkyOTc5N2E4MzU2YTQ5YzkxMjgyOGYzOTk3NzFmMmNlYzU2YWFiZjMxNzUzMzFjIiwidCI6eyJjIjo5ODk2LCJkIjo2LCJmIjowLCJzIjo0MDk4LCJ0IjoxODA3NDI5NDksInR0IjpbMV19LCJ1IjoiMDAwMDAwMDA4MDM4YzA5ZGMyMmQ5NmNlOGY5YWIzNjA0NzA4M2U1YSIsInYiOiIyLjkuMjczMSJ9.ZIdSqAhJSjCHd6pBxcZtQb60GiY7nd4AD-0cnZoSKUJ8LqRDzO6zTEHKNi4ZVp9py067CIGhw8lEBq9gbaRjW5CaKsOGGpo2FvLrcYNdiryXpPEFMlBa6X6v6SFf5YTSB1URpgQRa7E7mkzgRh0kiwE1AHXAnVoaJ-Vz-YpNxNl0lyLWsjyRQfSfesYwSvN1cUBe0kRNsR827nYfeYQnIC8AfpoVRi7X9LV9hLlKtBWo8lcru57YwWhPhg7TZhXSeTLApuV7wHXCHNgBEIcI5lLOuQZpTCwEfjhdkz967NHIlHmi4IU2AlE8zAl0jhZO2L11hKNBu8kNjOSPtBmi6Pv_7-_OL6eesuaPP0KCtxNklLgEpEgwzTS1H-7tIjWltB-fNgVkRnJxqGgXwoWQ4LQ9P56sRiYMkE87wkmmgP02O_QtJLq4mkufdgKpJYD8jbvvB8gukGT4oiVioEq2FmHufpQVeMfbJT4l-kZ7C3tvUK1DI6aPwTVZ9c_DZmRyAsOOcvdCU8sbAZ_94v1jEcSO40QtqvpQ4Gb_RlZnZsqx5Hx-P9xL50mIpF3PWOy8tZigLhJ8rnvDrwHo55UztmeMDzpUkGT0eUVKwNEgKDlmCAhS0uUMtgDoMA1O__XNYgQHxF2bOdmFzRUDF9GkZqKiyv9bZyY26e4IlIVRSBRaCClWjIMYnctXt0VVlzy-s-kj1m4hiNr2mKhfogjzAnrxv5YdGJ03NDxvVHF5SjkkdRGmnugiGcg2ZT01mU8qPQ31WmEiNiZRYpje9gg1ITlgjodrGfTPLHNDqPz1EaQpEIHfLdz2m0OOpw5gVq6Q9k5-tBpjbJHI8OKdQ5gEoigitZSm0OH-wYghj91gvvaeExhqtY2C8zR5aKGA7mHKHJQ2aW1jKBcg8zOWGmVYCs4pflHP8DI0e2ZX-C5ws0LcI9J2D0RZqhzw6RIKMMd2Kf5IV8GqWDByYzzg9zr2lyo_-NrpfoTuJCFiwAnbMp6xoXYvnUvlElrRNW1m76QEBRqXWrJOuOKMDnQBZbfnX-FJn-MY88EAI8PjFg3ICq9LNyDS4ewVbmSSZjSQdVXlspjLGDIj61UJnzz50cJyDHL-LGRo0QEOvHemnUa1aVOyqnSbyaGZrYpqc4AMdf_8E79bS_u7WrV9cBBDkGctF68jcgKh2vioKmL3sp28dWl6x4tu2R-791QQcO9JvUcZkwimkPOBczOw5kAgWvYAIkbjcB4Zvjf3MbzlCm6HngZ2FxhUSAPaILUdwlHelcTjf7wnxq36loLA9lUYElFewWpvYbrl5mVJM9gQdKf29pTNllnC8LgyLsf-AJmQhuRJdwDQzQCh9qgZeNXFhBypxA.",
-      "referer": "https://app.xhs.cn/",
+      "x-mini-gid": "7cf138a2a6d0543d0eb19cf80a20ce0a43cec3d9473591bb778637a1",
+      "x-mini-s1": "ABoCAAABSuZRo+Npn7Oc4EcJ1h/0MXmFHz1vMbUfJTqF2vdkdjmsxyDr8WDyTrnH2KJvhD3+WScYNx7uG+A=",
+      "x-mini-sig": "7ca6e39a1cc6ab48b7fe3b83b4408a2582ef9b02a7d462d2ac4dd145d05346b3",
+      "x-mini-mua": "eyJhIjoiRUNGQUFGMDEiLCJjIjo1MzgsImsiOiJlMmE3OWJkYzYwYmNlYWU5MTRiZTAxNGYxOWRmMmI0NDAxMjRkNTYxY2I2ZmY2MzM4NDYyY2QxNzNmMWQ5NzY0IiwicCI6ImEiLCJzIjoiNzNjZmJkN2M3YjcyMTcxMjRlMzNjMjdkNjdlNTFhMjk0NzQzODg4NjYxNjAyOTEwZDI1YWY0NTVhNWRlYzgwMzk3ODYwYjk3OTJhNzIwN2EzOWIxZTg4ODUyYmIyNDQ5ZjVlODg0YjhjMDhmNDMxZjdhMzBkNGY3OWQwYjk2MmIiLCJ0Ijp7ImMiOjE0NTIsImQiOjYsImYiOjAsInMiOjQwOTgsInQiOjE1NDYyMDY5MCwidHQiOlsxXX0sInUiOiIwMDAwMDAwMDgwMzhjMDlkYzIyZDk2Y2U4ZjlhYjM2MDQ3MDgzZTVhIiwidiI6IjIuOS4yNzMxIn0.XAAkJHGiTGfOlnwbKoepi6z-oaikl8LxxWc1rjMRMe1_rW4nm41CRIIMvbbZwq8ClxndC5WnG0OeRvFZgDbcCT-vOZ5Gft3B_6TTOHa_qpk5YHRFktc5gip8ExLYNmo9OAA7ClpIWjVsntaL6Wy0_hNsj-jCFdYJR9kfz0EHGrjfNytDNsdE7yiS6__noWkQEml22X-TP2ZrOZWVKSAEaNzEWPOcZboxdNGdbb51p74i7lzbCHAfBOye0VeI2pH8XKXrNl3x4Qb5VtHq6xyME7hBIdvrL7cgebEwiCyV5gjoM0036dO9QmNWOQ6RrW2S82S_LFvu2RDtKgl57XBv2Uno6RhxKAeVuQhA86egNMj4EhL2bb14WRqvw_ZGjgFZSr-Ro75upY3dZh159undfNY2hefxE-dhl64P6jJxYHKoZ3GZFexF2W-SePqGUgyLMUTZ4b74pgHxqOIFohCYoJBtJkVDwGP2RkMfP5qvGUZi-mROKufyohymVLi1KJy_5CmENRAEbMwedw9lbDKlSGnA6L--JV6xKywH9ziQ6fkTUaBr7kWlV8ZpoS4HWS1QLZ-77zZxHEl_GwqnAc1AQ1GA8gR3zXE83XHC3PKjQIR-Sir5LSgz_fLfyQ1miTmalhJW6Hp9a9s269P_I1Ph2WfxCIojOyexlHtcSO1QK_OqP6D_OePRCTF5ZdAohKmsYod6thaxZt39kd1DBiQJ3wEJVth55BWcLNn-MUbkjN2KOwtFyfrojAatGnizOwzpAqZ-6NjaKMTwbqzuMn1KG0r7GAaq53-oo2vNfOXXJvJDOyWHwpyOqWckyiiY8GxaIU2VzrvjFCHHFOb5aJ7Z5W_V_Zr7p5DnzIwhI3jUp9Y9jOO1I3IbUQ9q8p0MvdrsYfqnDomohlRfogAD3Hv3F2CrE8-25b5SmyCSgs_zzgXtTF_uZdax8-ol-IoksR9OKmvGvY0NFP4o85ZVbHoIH346V25_yF21j-nMD5smvB7I75iRkm2UezVNxUwB_znMP5ABtt_CtBrf_E-NVbCeiBaXrvnLXfTCrcG1YgUclAIY5dliUjMbFwCEvGPMJJToa7YyxQFdQP_TYWgf4N1pZeQeVwC7uQ2hkFjcsDc3Le0fDG-5i7ceuP-7wsls4RBLm5JSHL0Cg3cfQSSr5NJmdhj8JHGp-4ZrijtjgWN76EoAfpkw2fzjAs4TidGxm5Tt1zmTGYqXjmJEaXl0SrN4HZblNc-3lDGaRyYQJOSA8MpqtvmEVOGpzuSgBG_5912Br1t52xIhYuHK8uG2_hLr6nDMlAw0vWghi1vybzXc4_QC55MbNu2ESTifedm1G1NvOkyMfRzJyI-C8q15o1O2YA.",
+      "xy-common-params": "fid=17551017151098354944b753319f4dbc9ed5a0f718ae&gid=7cf138a2a6d0543d0eb19cf80a20ce0a43cec3d9473591bb778637a1&device_model=phone&tz=Asia%2FShanghai&channel=jlight&versionName=8.96.0&deviceId=c90c36d9-e241-3a36-9452-e9b6507ab5c2&platform=android&sid=session.1757063893546502696766&identifier_flag=4&project_id=ECFAAF&x_trace_page_current=user_page&lang=zh-Hans&app_id=ECFAAF01&uis=light&teenager=0&active_ctry=CN&cpu_name=qcom&dlang=zh&data_ctry=CN&SUE=1&launch_id=1760626617&origin_channel=jlight&overseas_channel=0&mlanguage=zh_cn&folder_type=none&auto_trans=0&t=1760630914&build=8960817&holder_ctry=CN&did=5e040bd8d68c455a94fb963f2b18e622",
       "user-agent": "Dalvik/2.1.0 (Linux; U; Android 14; XQ-DE72 Build/67.1.F.2.220) Resolution/1080*2520 Version/8.96.0 Build/8960817 Device/(Sony;XQ-DE72) discover/8.96.0 NetType/WiFi",
+      "shield": "XYAAQAAwAAAAEAAABTAAAAUzUWEe0xG1IbD9/c+qCLOlKGmTtFa+lG434HeuFeRaoRzITjnbAzRZ2t/eRez8N738t+2KY3EgwbGDeOYbvzjXll1eavkQIMLlGIVknPRCjorBrw",
+      "xy-platform-info": "platform=android&build=8960817&deviceId=c90c36d9-e241-3a36-9452-e9b6507ab5c2",
+      "referer": "https://app.xhs.cn/",
       "accept-encoding": "gzip, deflate"
     },
     "timeout_seconds": 10
