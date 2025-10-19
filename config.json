@@ -26,7 +26,6 @@
     "timeout_seconds": 10
   },
   "programs": {
-    "powershell_exe": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
     "rtmpdump_exe": "C:\\Users\\iouzz\\rtmpdump-2.3\\rtmpdump.exe"
   }
 }
