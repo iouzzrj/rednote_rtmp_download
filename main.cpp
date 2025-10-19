@@ -306,10 +306,10 @@ namespace
 		return oss.str();
 	}
 
-	fs::path prepare_download_path(const DownloadConfig& download_config, std::string_view room_id)
-	{
-		fs::path download_dir = download_config.downloads_root / today_folder_name();
-		fs::create_directories(download_dir);
+        fs::path prepare_download_path(const DownloadConfig& download_config, std::string_view room_id)
+        {
+                fs::path download_dir = fs::absolute(download_config.downloads_root) / today_folder_name();
+                fs::create_directories(download_dir);
 
 		std::string filename = std::string(room_id) + download_config.filename_suffix + ".flv";
 		fs::path candidate = download_dir / filename;
@@ -357,38 +357,162 @@ namespace
 		return command.str();
 	}
 
-	void trigger_rtmpdump(const Config& config, const std::string& stream_url, const std::string& room_id)
-	{
-		const auto output_path = prepare_download_path(config.download, room_id);
-
-		std::cout << "下载输出路径: " << output_path << '\n';
-
-		const auto command = build_rtmpdump_command(config.programs, stream_url, output_path);
-		std::cout << "rtmpdump 命令: " << command << '\n';
+        std::string build_rtmp_url(const Config& config, const std::string& room_id)
+        {
+                std::ostringstream oss;
+                oss << config.download.base_stream_url;
+                if (!config.download.base_stream_url.empty() && config.download.base_stream_url.back() != '/')
+                {
+                        oss << '/';
+                }
+                oss << room_id;
+                return oss.str();
+        }
 
 #ifdef _WIN32
-		std::cout << "开始调用 rtmpdump 下载 RTMP 流...\n";
-		const int exit_code = std::system(command.c_str());
-		if (exit_code != 0)
-		{
-			std::cerr << "rtmpdump 执行失败，退出码: " << exit_code << '\n';
-		}
-#else
-		std::cout << "当前环境不是 Windows，已输出 rtmpdump 命令供手动执行。\n";
-#endif
-	}
+        std::wstring widen_utf8(std::string_view input)
+        {
+                if (input.empty())
+                {
+                        return {};
+                }
 
-	std::string build_rtmp_url(const Config& config, const std::string& room_id)
-	{
-		std::ostringstream oss;
-		oss << config.download.base_stream_url;
-		if (!config.download.base_stream_url.empty() && config.download.base_stream_url.back() != '/')
-		{
-			oss << '/';
-		}
-		oss << room_id;
-		return oss.str();
-	}
+                const int required = MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0);
+                if (required <= 0)
+                {
+                        throw std::runtime_error("无法将字符串从 UTF-8 转换为 UTF-16");
+                }
+
+                std::wstring buffer(static_cast<std::size_t>(required), L'\0');
+                const int converted = MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), buffer.data(), required);
+                if (converted != required)
+                {
+                        throw std::runtime_error("转换为 UTF-16 时发生未知错误");
+                }
+
+                return buffer;
+        }
+
+        std::string narrow_utf8(std::wstring_view input)
+        {
+                if (input.empty())
+                {
+                        return {};
+                }
+
+                const int required = WideCharToMultiByte(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0, nullptr, nullptr);
+                if (required <= 0)
+                {
+                        return {};
+                }
+
+                std::string buffer(static_cast<std::size_t>(required), '\0');
+                const int converted = WideCharToMultiByte(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), buffer.data(), required, nullptr, nullptr);
+                if (converted != required)
+                {
+                        return {};
+                }
+
+                return buffer;
+        }
+
+        std::string format_windows_error(DWORD error)
+        {
+                if (error == 0)
+                {
+                        return {};
+                }
+
+                LPWSTR buffer = nullptr;
+                const DWORD length = FormatMessageW(
+                        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                        nullptr,
+                        error,
+                        0,
+                        reinterpret_cast<LPWSTR>(&buffer),
+                        0,
+                        nullptr);
+
+                if (length == 0 || buffer == nullptr)
+                {
+                        return {};
+                }
+
+                std::wstring_view message(buffer, length);
+                std::string result = narrow_utf8(message);
+                LocalFree(buffer);
+
+                while (!result.empty() && (result.back() == '\r' || result.back() == '\n'))
+                {
+                        result.pop_back();
+                }
+
+                return result;
+        }
+#endif
+
+        void trigger_rtmpdump(const Config& config, const std::string& stream_url, const std::string& room_id)
+        {
+                const auto output_path = prepare_download_path(config.download, room_id);
+
+                std::cout << "下载输出路径: " << output_path << '\n';
+
+                const auto command = build_rtmpdump_command(config.programs, stream_url, output_path);
+                std::cout << "rtmpdump 命令: " << command << '\n';
+
+#ifdef _WIN32
+                std::wostringstream command_line_stream;
+                const std::wstring exe_path = config.programs.rtmpdump_exe.wstring();
+                const std::wstring stream_url_w = widen_utf8(stream_url);
+                const std::wstring output_path_w = output_path.wstring();
+                command_line_stream << L'"' << exe_path << L'"' << L" -r " << L'"' << stream_url_w << L'"' << L" -o " << L'"' << output_path_w << L'"' << L" --live";
+                std::wstring command_line = command_line_stream.str();
+
+                std::vector<wchar_t> command_buffer(command_line.begin(), command_line.end());
+                command_buffer.push_back(L'\0');
+
+                STARTUPINFOW startup_info{};
+                startup_info.cb = sizeof(startup_info);
+                PROCESS_INFORMATION process_info{};
+
+                std::cout << "开始调用 rtmpdump 下载 RTMP 流...\n";
+
+                if (!CreateProcessW(
+                            nullptr,
+                            command_buffer.data(),
+                            nullptr,
+                            nullptr,
+                            FALSE,
+                            0,
+                            nullptr,
+                            nullptr,
+                            &startup_info,
+                            &process_info))
+                {
+                        const DWORD error = GetLastError();
+                        std::ostringstream oss;
+                        oss << "无法启动 rtmpdump，错误代码: " << error;
+                        if (const auto message = format_windows_error(error); !message.empty())
+                        {
+                                oss << " (" << message << ')';
+                        }
+                        throw std::runtime_error(oss.str());
+                }
+
+                WaitForSingleObject(process_info.hProcess, INFINITE);
+
+                DWORD exit_code = 0;
+                if (GetExitCodeProcess(process_info.hProcess, &exit_code) && exit_code != 0)
+                {
+                        std::cerr << "rtmpdump 执行失败，退出码: " << exit_code << '\n';
+                }
+
+                CloseHandle(process_info.hThread);
+                CloseHandle(process_info.hProcess);
+#else
+                std::cout << "当前环境不是 Windows，已输出 rtmpdump 命令供手动执行。\n";
+#endif
+        }
 
 } // namespace
 
