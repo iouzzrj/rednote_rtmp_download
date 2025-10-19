@@ -2,6 +2,7 @@
 #include <nlohmann/json.hpp>
 
 #include <chrono>
+#include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -199,66 +200,65 @@ namespace
 		return response;
 	}
 
-	std::optional<std::string> extract_room_id(const json& root)
-	{
-		const auto dynamic_info_it = root.find("data");
-		if (dynamic_info_it == root.end() || !dynamic_info_it->is_object())
-		{
-			return std::nullopt;
-		}
+        std::optional<std::string> extract_room_id(const json& root)
+        {
+                const auto dumped = root.dump();
+                const std::string target = "room_id";
+                std::vector<std::string> room_ids;
 
-		const auto& dynamic_info = *dynamic_info_it;
-		const auto host_info_it = dynamic_info.find("dynamic_host_info");
-		if (host_info_it == dynamic_info.end() || !host_info_it->is_object())
-		{
-			return std::nullopt;
-		}
+                std::size_t search_pos = 0;
+                while (true)
+                {
+                        const auto found = dumped.find(target, search_pos);
+                        if (found == std::string::npos)
+                        {
+                                break;
+                        }
 
-		const auto& host_info = *host_info_it;
-		if (host_info.contains("room_id"))
-		{
-			const auto& room_id_value = host_info.at("room_id");
-			if (room_id_value.is_number_integer())
-			{
-				return std::to_string(room_id_value.get<long long>());
-			}
-			if (room_id_value.is_string())
-			{
-				return room_id_value.get<std::string>();
-			}
-		}
+                        auto digit_pos = found + target.size();
+                        while (digit_pos < dumped.size() && !std::isdigit(static_cast<unsigned char>(dumped[digit_pos])))
+                        {
+                                ++digit_pos;
+                        }
 
-		// 有些响应可能把直播信息嵌入在 live_stream_info 字段里
-		if (host_info.contains("live_stream_info"))
-		{
-			const auto& live_stream_info = host_info.at("live_stream_info");
-			if (live_stream_info.is_string())
-			{
-				try
-				{
-					const auto nested = json::parse(live_stream_info.get<std::string>());
-					if (nested.contains("media") && nested.at("media").contains("room_id"))
-					{
-						const auto& room_id_value = nested.at("media").at("room_id");
-						if (room_id_value.is_number_integer())
-						{
-							return std::to_string(room_id_value.get<long long>());
-						}
-						if (room_id_value.is_string())
-						{
-							return room_id_value.get<std::string>();
-						}
-					}
-				}
-				catch (const std::exception&)
-				{
-					// 忽略解析错误，继续尝试其它字段
-				}
-			}
-		}
+                        if (digit_pos >= dumped.size())
+                        {
+                                break;
+                        }
 
-		return std::nullopt;
-	}
+                        auto end_pos = digit_pos;
+                        while (end_pos < dumped.size() && std::isdigit(static_cast<unsigned char>(dumped[end_pos])))
+                        {
+                                ++end_pos;
+                        }
+
+                        if (end_pos > digit_pos)
+                        {
+                                room_ids.emplace_back(dumped.substr(digit_pos, end_pos - digit_pos));
+                        }
+
+                        search_pos = end_pos;
+                }
+
+                if (!room_ids.empty())
+                {
+                        std::cout << "提取到的 room_id 列表: ";
+                        for (std::size_t i = 0; i < room_ids.size(); ++i)
+                        {
+                                if (i > 0)
+                                {
+                                        std::cout << ", ";
+                                }
+                                std::cout << room_ids[i];
+                        }
+                        std::cout << '\n';
+
+                        return room_ids.front();
+                }
+
+                std::cout << "未在响应中发现 room_id\n";
+                return std::nullopt;
+        }
 
 	std::string today_folder_name()
 	{
