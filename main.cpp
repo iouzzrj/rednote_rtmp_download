@@ -72,8 +72,8 @@ struct PollingConfig
 {
         std::vector<PossibleStartTime> possible_start_times;
         int accelerate_offset_minutes = 0;
-        int accelerated_wait_minutes = 1;
-        int normal_wait_minutes = 5;
+        int accelerated_wait_seconds = 60;
+        int normal_wait_seconds = 300;
 };
 
 struct Config
@@ -155,12 +155,12 @@ namespace
 		return hour * 60 + minute;
 	}
 
-	int parse_int_field(json& object, std::string_view key, int default_value)
-	{
-		const std::string key_str(key);
-		const auto it = object.find(key_str);
-		if (it == object.end())
-		{
+        int parse_int_field(json& object, std::string_view key, int default_value)
+        {
+                const std::string key_str(key);
+                const auto it = object.find(key_str);
+                if (it == object.end())
+                {
 			object[key_str] = default_value;
 			return default_value;
 		}
@@ -170,16 +170,41 @@ namespace
 			throw std::runtime_error("配置文件中的 " + key_str + " 字段必须是整数");
 		}
 
-		const int value = it->get<int>();
-		object[key_str] = value;
-		return value;
-	}
+                const int value = it->get<int>();
+                object[key_str] = value;
+                return value;
+        }
 
-	PollingConfig parse_polling_config(json& config_json)
-	{
-		PollingConfig polling;
+        int parse_wait_seconds(json& config_json,
+                std::string_view seconds_key,
+                int default_seconds)
+        {
+                const std::string seconds_key_str(seconds_key);
+                if (const auto it = config_json.find(seconds_key_str); it != config_json.end())
+                {
+                        if (!it->is_number_integer())
+                        {
+                                throw std::runtime_error("配置文件中的 " + seconds_key_str + " 字段必须是整数");
+                        }
 
-		const std::string start_times_key = "likely_broadcast_times";
+                        int value = it->get<int>();
+                        if (value <= 0)
+                        {
+                                value = default_seconds;
+                        }
+                        config_json[seconds_key_str] = value;
+                        return value;
+                }
+
+                config_json[seconds_key_str] = default_seconds;
+                return default_seconds;
+        }
+
+        PollingConfig parse_polling_config(json& config_json)
+        {
+                PollingConfig polling;
+
+                const std::string start_times_key = "likely_broadcast_times";
 		if (!config_json.contains(start_times_key))
 		{
 			config_json[start_times_key] = json::array();
@@ -221,21 +246,15 @@ namespace
 		polling.accelerate_offset_minutes = offset;
 		config_json["accelerated_request_offset_minutes"] = offset;
 
-		int accelerated_wait = parse_int_field(config_json, "accelerated_wait_minutes", polling.accelerated_wait_minutes);
-		if (accelerated_wait <= 0)
-		{
-			accelerated_wait = polling.accelerated_wait_minutes;
-		}
-		polling.accelerated_wait_minutes = accelerated_wait;
-		config_json["accelerated_wait_minutes"] = accelerated_wait;
+                polling.accelerated_wait_seconds = parse_wait_seconds(
+                        config_json,
+                        "accelerated_wait_seconds",
+                        polling.accelerated_wait_seconds);
 
-		int normal_wait = parse_int_field(config_json, "normal_wait_minutes", polling.normal_wait_minutes);
-		if (normal_wait <= 0)
-		{
-			normal_wait = polling.normal_wait_minutes;
-		}
-		polling.normal_wait_minutes = normal_wait;
-		config_json["normal_wait_minutes"] = normal_wait;
+                polling.normal_wait_seconds = parse_wait_seconds(
+                        config_json,
+                        "normal_wait_seconds",
+                        polling.normal_wait_seconds);
 
                 return polling;
         }
@@ -274,17 +293,17 @@ namespace
 		return false;
 	}
 
-	int determine_wait_minutes(const PollingConfig& polling)
-	{
-		const std::tm tm = current_local_tm();
-		const int current_minutes = tm.tm_hour * 60 + tm.tm_min;
-		const int accelerated_wait = std::max(1, polling.accelerated_wait_minutes);
-		const int normal_wait = std::max(1, polling.normal_wait_minutes);
+        int determine_wait_seconds(const PollingConfig& polling)
+        {
+                const std::tm tm = current_local_tm();
+                const int current_minutes = tm.tm_hour * 60 + tm.tm_min;
+                const int accelerated_wait = std::max(1, polling.accelerated_wait_seconds);
+                const int normal_wait = std::max(1, polling.normal_wait_seconds);
 
-		if (is_within_accelerated_window(polling, current_minutes))
-		{
-			return accelerated_wait;
-		}
+                if (is_within_accelerated_window(polling, current_minutes))
+                {
+                        return accelerated_wait;
+                }
 
 		return normal_wait;
 	}
@@ -797,9 +816,9 @@ int main()
 				}
 			}
 
-			const int wait_minutes = determine_wait_minutes(config.polling);
-			std::cout << "等待 " << wait_minutes << " 分钟后重试...\n";
-			std::this_thread::sleep_for(std::chrono::minutes(wait_minutes));
+                        const int wait_seconds = determine_wait_seconds(config.polling);
+                        std::cout << "等待 " << wait_seconds << " 秒后重试...\n";
+                        std::this_thread::sleep_for(std::chrono::seconds(wait_seconds));
 		}
 	}
 	catch (const std::exception& ex)
