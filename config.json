@@ -7,7 +7,6 @@
   "accelerated_request_offset_minutes": 30,
   "accelerated_wait_minutes": 1,
   "normal_wait_minutes": 5,
-  "history_live_times": [],
   "request": {
     "base_url": "https://live-mall.xiaohongshu.com/api/sns/red/livemall/app/dynamic/host/info",
     "headers": {
