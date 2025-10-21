@@ -70,11 +70,10 @@ struct PossibleStartTime
 
 struct PollingConfig
 {
-	std::vector<PossibleStartTime> possible_start_times;
-	int accelerate_offset_minutes = 0;
-	int accelerated_wait_minutes = 1;
-	int normal_wait_minutes = 5;
-	std::vector<std::string> history_start_times;
+        std::vector<PossibleStartTime> possible_start_times;
+        int accelerate_offset_minutes = 0;
+        int accelerated_wait_minutes = 1;
+        int normal_wait_minutes = 5;
 };
 
 struct Config
@@ -238,30 +237,8 @@ namespace
 		polling.normal_wait_minutes = normal_wait;
 		config_json["normal_wait_minutes"] = normal_wait;
 
-		const std::string history_key = "history_live_times";
-		if (!config_json.contains(history_key))
-		{
-			config_json[history_key] = json::array();
-		}
-
-		const auto& history_json = config_json.at(history_key);
-		if (!history_json.is_array())
-		{
-			throw std::runtime_error("配置文件中的 history_live_times 字段必须是字符串数组");
-		}
-
-		for (const auto& entry : history_json)
-		{
-			if (!entry.is_string())
-			{
-				throw std::runtime_error("配置文件中的 history_live_times 条目必须是字符串");
-			}
-
-			polling.history_start_times.push_back(entry.get<std::string>());
-		}
-
-		return polling;
-	}
+                return polling;
+        }
 
 	std::tm current_local_tm()
 	{
@@ -318,28 +295,6 @@ namespace
 		std::ostringstream oss;
 		oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
 		return oss.str();
-	}
-
-	void append_history_entry(Config& config, json& config_json, const fs::path& config_path, const std::string& timestamp)
-	{
-		config.polling.history_start_times.push_back(timestamp);
-
-		auto& history_json = config_json["history_live_times"];
-		if (!history_json.is_array())
-		{
-			history_json = json::array();
-		}
-		history_json.push_back(timestamp);
-
-		std::ofstream output(config_path, std::ios::binary | std::ios::trunc);
-		if (!output)
-		{
-			std::ostringstream oss;
-			oss << "无法写入配置文件: " << config_path;
-			throw std::runtime_error(oss.str());
-		}
-
-		output << std::setw(2) << config_json << '\n';
 	}
 
 	RequestConfig parse_request(const json& request_json)
@@ -408,10 +363,10 @@ namespace
 		return test_mode;
 	}
 
-	Config parse_config(const fs::path& path, json* raw_json = nullptr)
-	{
-		const auto file_content = read_file(path);
-		auto config_json = json::parse(file_content);
+        Config parse_config(const fs::path& path)
+        {
+                const auto file_content = read_file(path);
+                auto config_json = json::parse(file_content);
 
 		Config config;
 		config.host_id = config_json.at("host_id").get<std::string>();
@@ -425,12 +380,8 @@ namespace
 		{
 			config.test_mode = parse_test_mode(*it);
 		}
-		if (raw_json)
-		{
-			*raw_json = std::move(config_json);
-		}
-		return config;
-	}
+                return config;
+        }
 
 	size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
 	{
@@ -788,8 +739,7 @@ int main()
 	try
 	{
 		const fs::path config_path = "config.json";
-		json raw_config_json;
-		Config config = parse_config(config_path, &raw_config_json);
+                Config config = parse_config(config_path);
 
 		if (config.test_mode.enabled)
 		{
@@ -837,13 +787,10 @@ int main()
 				const auto stream_url = build_rtmp_url(config, *room_id);
 				std::cout << "使用固定 RTMP 模板构建播放链接: " << stream_url << '\n';
 
-				try
-				{
-					trigger_rtmpdump(config, stream_url, *room_id);
-					const std::string timestamp = current_timestamp_string();
-					std::cout << "记录历史开播时间: " << timestamp << '\n';
-					append_history_entry(config, raw_config_json, config_path, timestamp);
-				}
+                                try
+                                {
+                                        trigger_rtmpdump(config, stream_url, *room_id);
+                                }
 				catch (const std::exception& ex)
 				{
 					std::cerr << "处理直播间时发生错误: " << ex.what() << '\n';
