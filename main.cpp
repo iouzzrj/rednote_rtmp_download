@@ -410,64 +410,114 @@ namespace
 		return count;
 	}
 
-	std::string perform_request(const Config& config)
+	class CurlHttpClient
 	{
-		CURL* curl = curl_easy_init();
-		if (!curl)
+	public:
+		explicit CurlHttpClient(const Config& config)
 		{
-			throw std::runtime_error("无法初始化 libcurl");
+			curl_ = curl_easy_init();
+			if (!curl_)
+			{
+				throw std::runtime_error("无法初始化 libcurl");
+			}
+
+			// 配置基础选项，只需设置一次
+			curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, write_callback);
+			curl_easy_setopt(curl_, CURLOPT_ACCEPT_ENCODING, "");
+#ifdef CURLOPT_TCP_KEEPALIVE
+			curl_easy_setopt(curl_, CURLOPT_TCP_KEEPALIVE, 1L);
+#endif
+#ifdef CURLOPT_TCP_KEEPIDLE
+			curl_easy_setopt(curl_, CURLOPT_TCP_KEEPIDLE, 60L);
+#endif
+#ifdef CURLOPT_TCP_KEEPINTVL
+			curl_easy_setopt(curl_, CURLOPT_TCP_KEEPINTVL, 60L);
+#endif
+			curl_easy_setopt(curl_, CURLOPT_FORBID_REUSE, 0L);
+			curl_easy_setopt(curl_, CURLOPT_FRESH_CONNECT, 0L);
+
+			apply_timeout(config.request.timeout_seconds);
+
+			for (const auto& header : config.request.headers)
+			{
+				std::ostringstream header_stream;
+				header_stream << header.name << ": " << header.value;
+				headers_ = curl_slist_append(headers_, header_stream.str().c_str());
+			}
+
+			if (headers_)
+			{
+				curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, headers_);
+			}
 		}
 
-		std::string response;
-		struct curl_slist* headers = nullptr;
-
-		std::ostringstream url_stream;
-		url_stream << config.request.base_url << "?host_id=" << curl_easy_escape(curl, config.host_id.c_str(), 0);
-		const auto url = url_stream.str();
-
-		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, config.request.timeout_seconds);
-		// 允许 libcurl 自动解压 gzip/deflate 等压缩响应，避免读取到二进制数据
-		curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
-
-		for (const auto& header : config.request.headers)
+		~CurlHttpClient()
 		{
-			std::ostringstream header_stream;
-			header_stream << header.name << ": " << header.value;
-			headers = curl_slist_append(headers, header_stream.str().c_str());
+			if (headers_)
+			{
+				curl_slist_free_all(headers_);
+			}
+
+			if (curl_)
+			{
+				curl_easy_cleanup(curl_);
+			}
 		}
 
-		if (headers)
+		std::string perform_request(const Config& config)
 		{
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+			if (!curl_)
+			{
+				throw std::runtime_error("libcurl 会话尚未初始化");
+			}
+
+			apply_timeout(config.request.timeout_seconds);
+
+			std::string response;
+			curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &response);
+
+			char* escaped_host_id = curl_easy_escape(curl_, config.host_id.c_str(), 0);
+			if (!escaped_host_id)
+			{
+				throw std::runtime_error("无法对 host_id 进行 URL 编码");
+			}
+
+			std::ostringstream url_stream;
+			url_stream << config.request.base_url << "?host_id=" << escaped_host_id;
+			curl_free(escaped_host_id);
+
+			const auto url = url_stream.str();
+			curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
+
+			const auto res = curl_easy_perform(curl_);
+			if (res != CURLE_OK)
+			{
+				std::ostringstream error;
+				error << "HTTP 请求失败: " << curl_easy_strerror(res);
+				throw std::runtime_error(error.str());
+			}
+
+			long status_code = 0;
+			curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &status_code);
+			if (status_code != 200)
+			{
+				std::ostringstream error;
+				error << "HTTP 响应状态码异常: " << status_code;
+				throw std::runtime_error(error.str());
+			}
+
+			return response;
 		}
 
-		const auto res = curl_easy_perform(curl);
-		if (res != CURLE_OK)
+	private:
+		void apply_timeout(long timeout_seconds)
 		{
-			std::ostringstream error;
-			error << "HTTP 请求失败: " << curl_easy_strerror(res);
-			curl_slist_free_all(headers);
-			curl_easy_cleanup(curl);
-			throw std::runtime_error(error.str());
+			curl_easy_setopt(curl_, CURLOPT_TIMEOUT, timeout_seconds);
 		}
 
-		long status_code = 0;
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status_code);
-		curl_slist_free_all(headers);
-		curl_easy_cleanup(curl);
-
-		if (status_code != 200)
-		{
-			std::ostringstream error;
-			error << "HTTP 响应状态码异常: " << status_code;
-			throw std::runtime_error(error.str());
-		}
-
-		return response;
-	}
+		CURL* curl_ = nullptr;
+		curl_slist* headers_ = nullptr;
+	};
 
 	std::optional<std::string> extract_room_id(const json& root)
 	{
@@ -774,6 +824,8 @@ int main()
 			return 0;
 		}
 
+		CurlHttpClient http_client(config);
+
 		std::cout << "使用 host_id: " << config.host_id << '\n';
 
 		while (true)
@@ -781,7 +833,7 @@ int main()
 			std::optional<std::string> room_id;
 			try
 			{
-				const auto response = perform_request(config);
+				const auto response = http_client.perform_request(config);
 				std::cout << "HTTP 响应原始内容: " << response << '\n';
 
 				const auto response_json = json::parse(response);
