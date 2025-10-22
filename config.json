@@ -2,7 +2,8 @@
   "host_id": "5b687ad9c39aaf000120eb98",
   "likely_broadcast_times": [
     "09:30",
-    "17:00"
+    "17:00",
+    "20:00"
   ],
   "accelerated_request_offset_minutes": 60,
   "accelerated_wait_seconds": 15,
@@ -33,7 +34,8 @@
   },
   "programs": {
     "rtmpdump_exe": [
-      "C:\\Users\\iouzz\\rtmpdump-2.3\\rtmpdump.exe"
+      "C:\\Users\\iouzz\\rtmpdump-2.3\\rtmpdump.exe",
+      "C:\\Users\\Administrator\\Desktop\\aliyun_ftp\\rtmpdump-2.3\\rtmpdump.exe"
     ]
   },
   "test_mode": {
