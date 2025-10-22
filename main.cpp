@@ -78,12 +78,13 @@ struct PollingConfig
 
 struct Config
 {
-	std::string host_id;
-	RequestConfig request;
-	DownloadConfig download;
-	ProgramConfig programs;
-	TestModeConfig test_mode;
-	PollingConfig polling;
+        std::string host_id;
+        RequestConfig request;
+        DownloadConfig download;
+        ProgramConfig programs;
+        TestModeConfig test_mode;
+        PollingConfig polling;
+        bool http_debug_enabled = false;
 };
 
 namespace
@@ -382,38 +383,60 @@ namespace
 		return test_mode;
 	}
 
-	Config parse_config(const fs::path& path)
-	{
-		const auto file_content = read_file(path);
-		auto config_json = json::parse(file_content);
+        Config parse_config(const fs::path& path)
+        {
+                const auto file_content = read_file(path);
+                auto config_json = json::parse(file_content);
 
-		Config config;
-		config.host_id = config_json.at("host_id").get<std::string>();
-		config.request = parse_request(config_json.at("request"));
-		config.polling = parse_polling_config(config_json);
-		if (const auto it = config_json.find("programs"); it != config_json.end())
-		{
-			config.programs = parse_programs(*it);
-		}
-		if (const auto it = config_json.find("test_mode"); it != config_json.end())
-		{
-			config.test_mode = parse_test_mode(*it);
-		}
-		return config;
-	}
+                Config config;
+                config.host_id = config_json.at("host_id").get<std::string>();
+                config.request = parse_request(config_json.at("request"));
+                config.polling = parse_polling_config(config_json);
+                if (const auto it = config_json.find("programs"); it != config_json.end())
+                {
+                        config.programs = parse_programs(*it);
+                }
+                if (const auto it = config_json.find("test_mode"); it != config_json.end())
+                {
+                        config.test_mode = parse_test_mode(*it);
+                }
+                if (const auto it = config_json.find("http_debug"); it != config_json.end())
+                {
+                        if (!it->is_boolean())
+                        {
+                                throw std::runtime_error("配置文件中的 http_debug 字段必须是布尔值");
+                        }
+                        config.http_debug_enabled = it->get<bool>();
+                }
+                return config;
+        }
 
-	size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
-	{
-		auto* stream = static_cast<std::string*>(userdata);
-		const auto count = size * nmemb;
-		stream->append(ptr, count);
-		return count;
-	}
+        size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
+        {
+                auto* stream = static_cast<std::string*>(userdata);
+                const auto count = size * nmemb;
+                stream->append(ptr, count);
+                return count;
+        }
 
-	class CurlHttpClient
-	{
-	public:
-		explicit CurlHttpClient(const Config& config)
+        size_t header_callback(char* buffer, size_t size, size_t nitems, void* userdata)
+        {
+                auto* stream = static_cast<std::string*>(userdata);
+                const auto count = size * nitems;
+                stream->append(buffer, count);
+                return count;
+        }
+
+        struct HttpResponse
+        {
+                std::string body;
+                std::string headers;
+        };
+
+        class CurlHttpClient
+        {
+        public:
+                explicit CurlHttpClient(const Config& config)
 		{
 			curl_ = curl_easy_init();
 			if (!curl_)
@@ -422,10 +445,11 @@ namespace
 			}
 
 			// 配置基础选项，只需设置一次
-			curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, write_callback);
-			curl_easy_setopt(curl_, CURLOPT_ACCEPT_ENCODING, "");
+                        curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, write_callback);
+                        curl_easy_setopt(curl_, CURLOPT_HEADERFUNCTION, header_callback);
+                        curl_easy_setopt(curl_, CURLOPT_ACCEPT_ENCODING, "");
 #ifdef CURLOPT_TCP_KEEPALIVE
-			curl_easy_setopt(curl_, CURLOPT_TCP_KEEPALIVE, 1L);
+                        curl_easy_setopt(curl_, CURLOPT_TCP_KEEPALIVE, 1L);
 #endif
 #ifdef CURLOPT_TCP_KEEPIDLE
 			curl_easy_setopt(curl_, CURLOPT_TCP_KEEPIDLE, 60L);
@@ -464,22 +488,24 @@ namespace
 			}
 		}
 
-		std::string perform_request(const Config& config)
-		{
-			if (!curl_)
-			{
-				throw std::runtime_error("libcurl 会话尚未初始化");
-			}
+                HttpResponse perform_request(const Config& config)
+                {
+                        if (!curl_)
+                        {
+                                throw std::runtime_error("libcurl 会话尚未初始化");
+                        }
 
-			apply_timeout(config.request.timeout_seconds);
+                        apply_timeout(config.request.timeout_seconds);
 
-			std::string response;
-			curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &response);
+                        std::string response;
+                        std::string response_headers;
+                        curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &response);
+                        curl_easy_setopt(curl_, CURLOPT_HEADERDATA, &response_headers);
 
-			char* escaped_host_id = curl_easy_escape(curl_, config.host_id.c_str(), 0);
-			if (!escaped_host_id)
-			{
-				throw std::runtime_error("无法对 host_id 进行 URL 编码");
+                        char* escaped_host_id = curl_easy_escape(curl_, config.host_id.c_str(), 0);
+                        if (!escaped_host_id)
+                        {
+                                throw std::runtime_error("无法对 host_id 进行 URL 编码");
 			}
 
 			std::ostringstream url_stream;
@@ -500,18 +526,18 @@ namespace
 			long status_code = 0;
 			curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &status_code);
 			if (status_code != 200)
-			{
-				std::ostringstream error;
-				error << "HTTP 响应状态码异常: " << status_code;
-				throw std::runtime_error(error.str());
-			}
+                        {
+                                std::ostringstream error;
+                                error << "HTTP 响应状态码异常: " << status_code;
+                                throw std::runtime_error(error.str());
+                        }
 
-			return response;
-		}
+                        return HttpResponse{ std::move(response), std::move(response_headers) };
+                }
 
-	private:
-		void apply_timeout(long timeout_seconds)
-		{
+        private:
+                void apply_timeout(long timeout_seconds)
+                {
 			curl_easy_setopt(curl_, CURLOPT_TIMEOUT, timeout_seconds);
 		}
 
@@ -831,13 +857,17 @@ int main()
 		while (true)
 		{
 			std::optional<std::string> room_id;
-			try
-			{
-				const auto response = http_client.perform_request(config);
-				std::cout << "HTTP 响应原始内容: " << response << '\n';
+                        try
+                        {
+                                const auto response = http_client.perform_request(config);
+                                if (config.http_debug_enabled)
+                                {
+                                        std::cout << "HTTP 响应头:\n" << response.headers;
+                                        std::cout << "HTTP 响应体: " << response.body << '\n';
+                                }
 
-				const auto response_json = json::parse(response);
-				room_id = extract_room_id(response_json);
+                                const auto response_json = json::parse(response.body);
+                                room_id = extract_room_id(response_json);
 
 				if (!room_id)
 				{
