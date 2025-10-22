@@ -58,8 +58,8 @@ struct DownloadConfig
 
 struct ProgramConfig
 {
-        std::vector<fs::path> rtmpdump_search_paths = { fs::path{ "C:/Program Files/RTMPDump/rtmpdump.exe" } };
-        fs::path rtmpdump_exe;
+	std::vector<fs::path> rtmpdump_search_paths = { fs::path{ "C:/Program Files/RTMPDump/rtmpdump.exe" } };
+	fs::path rtmpdump_exe;
 };
 
 struct TestModeConfig
@@ -84,13 +84,13 @@ struct PollingConfig
 
 struct Config
 {
-        std::string host_id;
-        RequestConfig request;
-        DownloadConfig download;
-        ProgramConfig programs;
-        TestModeConfig test_mode;
-        PollingConfig polling;
-        bool http_debug_enabled = false;
+	std::string host_id;
+	RequestConfig request;
+	DownloadConfig download;
+	ProgramConfig programs;
+	TestModeConfig test_mode;
+	PollingConfig polling;
+	bool http_debug_enabled = false;
 };
 
 namespace
@@ -182,11 +182,11 @@ namespace
 		return value;
 	}
 
-        int parse_wait_seconds(json& config_json,
-                std::string_view seconds_key,
-                int default_seconds)
-        {
-                const std::string seconds_key_str(seconds_key);
+	int parse_wait_seconds(json& config_json,
+		std::string_view seconds_key,
+		int default_seconds)
+	{
+		const std::string seconds_key_str(seconds_key);
 		if (const auto it = config_json.find(seconds_key_str); it != config_json.end())
 		{
 			if (!it->is_number_integer())
@@ -203,209 +203,209 @@ namespace
 			return value;
 		}
 
-                config_json[seconds_key_str] = default_seconds;
-                return default_seconds;
-        }
+		config_json[seconds_key_str] = default_seconds;
+		return default_seconds;
+	}
 
-        bool equals_ignore_case(std::string_view lhs, std::string_view rhs)
-        {
-                if (lhs.size() != rhs.size())
-                {
-                        return false;
-                }
+	bool equals_ignore_case(std::string_view lhs, std::string_view rhs)
+	{
+		if (lhs.size() != rhs.size())
+		{
+			return false;
+		}
 
-                for (std::size_t i = 0; i < lhs.size(); ++i)
-                {
-                        const unsigned char left = static_cast<unsigned char>(lhs[i]);
-                        const unsigned char right = static_cast<unsigned char>(rhs[i]);
-                        if (std::tolower(left) != std::tolower(right))
-                        {
-                                return false;
-                        }
-                }
+		for (std::size_t i = 0; i < lhs.size(); ++i)
+		{
+			const unsigned char left = static_cast<unsigned char>(lhs[i]);
+			const unsigned char right = static_cast<unsigned char>(rhs[i]);
+			if (std::tolower(left) != std::tolower(right))
+			{
+				return false;
+			}
+		}
 
-                return true;
-        }
+		return true;
+	}
 
-        fs::path make_absolute_path(const fs::path& path)
-        {
-                std::error_code ec;
-                const auto absolute_path = fs::absolute(path, ec);
-                if (!ec)
-                {
-                        return absolute_path;
-                }
+	fs::path make_absolute_path(const fs::path& path)
+	{
+		std::error_code ec;
+		const auto absolute_path = fs::absolute(path, ec);
+		if (!ec)
+		{
+			return absolute_path;
+		}
 
-                return path;
-        }
+		return path;
+	}
 
-        bool has_rtmpdump_filename(const fs::path& path)
-        {
-                if (!path.has_filename())
-                {
-                        return false;
-                }
+	bool has_rtmpdump_filename(const fs::path& path)
+	{
+		if (!path.has_filename())
+		{
+			return false;
+		}
 
-                return equals_ignore_case(path.filename().string(), "rtmpdump.exe");
-        }
+		return equals_ignore_case(path.filename().string(), "rtmpdump.exe");
+	}
 
-        std::optional<fs::path> find_rtmpdump_in_directory(const fs::path& directory)
-        {
-                std::error_code ec;
-                if (directory.empty() || !fs::exists(directory, ec))
-                {
-                        return std::nullopt;
-                }
+	std::optional<fs::path> find_rtmpdump_in_directory(const fs::path& directory)
+	{
+		std::error_code ec;
+		if (directory.empty() || !fs::exists(directory, ec))
+		{
+			return std::nullopt;
+		}
 
-                if (fs::is_regular_file(directory, ec))
-                {
-                        if (has_rtmpdump_filename(directory))
-                        {
-                                return make_absolute_path(directory);
-                        }
+		if (fs::is_regular_file(directory, ec))
+		{
+			if (has_rtmpdump_filename(directory))
+			{
+				return make_absolute_path(directory);
+			}
 
-                        return std::nullopt;
-                }
+			return std::nullopt;
+		}
 
-                if (!fs::is_directory(directory, ec))
-                {
-                        return std::nullopt;
-                }
+		if (!fs::is_directory(directory, ec))
+		{
+			return std::nullopt;
+		}
 
-                const fs::path direct_candidate = directory / "rtmpdump.exe";
-                if (fs::exists(direct_candidate, ec) && fs::is_regular_file(direct_candidate, ec))
-                {
-                        return make_absolute_path(direct_candidate);
-                }
+		const fs::path direct_candidate = directory / "rtmpdump.exe";
+		if (fs::exists(direct_candidate, ec) && fs::is_regular_file(direct_candidate, ec))
+		{
+			return make_absolute_path(direct_candidate);
+		}
 
-                fs::recursive_directory_iterator it(
-                        directory,
-                        fs::directory_options::skip_permission_denied,
-                        ec);
-                fs::recursive_directory_iterator end;
-                for (; it != end; it.increment(ec))
-                {
-                        if (ec)
-                        {
-                                ec.clear();
-                                continue;
-                        }
+		fs::recursive_directory_iterator it(
+			directory,
+			fs::directory_options::skip_permission_denied,
+			ec);
+		fs::recursive_directory_iterator end;
+		for (; it != end; it.increment(ec))
+		{
+			if (ec)
+			{
+				ec.clear();
+				continue;
+			}
 
-                        const auto& entry_path = it->path();
-                        if (!has_rtmpdump_filename(entry_path))
-                        {
-                                continue;
-                        }
+			const auto& entry_path = it->path();
+			if (!has_rtmpdump_filename(entry_path))
+			{
+				continue;
+			}
 
-                        std::error_code status_ec;
-                        if (fs::is_regular_file(entry_path, status_ec))
-                        {
-                                return make_absolute_path(entry_path);
-                        }
-                }
+			std::error_code status_ec;
+			if (fs::is_regular_file(entry_path, status_ec))
+			{
+				return make_absolute_path(entry_path);
+			}
+		}
 
-                return std::nullopt;
-        }
+		return std::nullopt;
+	}
 
-        std::optional<fs::path> resolve_rtmpdump_candidate(const fs::path& candidate)
-        {
-                if (candidate.empty())
-                {
-                        return std::nullopt;
-                }
+	std::optional<fs::path> resolve_rtmpdump_candidate(const fs::path& candidate)
+	{
+		if (candidate.empty())
+		{
+			return std::nullopt;
+		}
 
-                if (const auto result = find_rtmpdump_in_directory(candidate))
-                {
-                        return result;
-                }
+		if (const auto result = find_rtmpdump_in_directory(candidate))
+		{
+			return result;
+		}
 
-                return std::nullopt;
-        }
+		return std::nullopt;
+	}
 
-        fs::path get_current_executable_path()
-        {
+	fs::path get_current_executable_path()
+	{
 #ifdef _WIN32
-                std::wstring buffer(MAX_PATH, L'\0');
+		std::wstring buffer(MAX_PATH, L'\0');
 
-                while (true)
-                {
-                        const DWORD length = GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
-                        if (length == 0)
-                        {
-                                throw std::runtime_error("无法获取当前程序的路径");
-                        }
+		while (true)
+		{
+			const DWORD length = GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
+			if (length == 0)
+			{
+				throw std::runtime_error("无法获取当前程序的路径");
+			}
 
-                        if (length < buffer.size())
-                        {
-                                buffer.resize(length);
-                                break;
-                        }
+			if (length < buffer.size())
+			{
+				buffer.resize(length);
+				break;
+			}
 
-                        buffer.resize(buffer.size() * 2);
-                }
+			buffer.resize(buffer.size() * 2);
+		}
 
-                return fs::path(buffer);
+		return fs::path(buffer);
 #else
-                std::array<char, 4096> buffer{};
-                const ssize_t length = ::readlink("/proc/self/exe", buffer.data(), buffer.size() - 1);
-                if (length <= 0)
-                {
-                        std::error_code ec;
-                        const auto current = fs::current_path(ec);
-                        if (ec)
-                        {
-                                throw std::runtime_error("无法确定当前程序路径");
-                        }
+		std::array<char, 4096> buffer{};
+		const ssize_t length = ::readlink("/proc/self/exe", buffer.data(), buffer.size() - 1);
+		if (length <= 0)
+		{
+			std::error_code ec;
+			const auto current = fs::current_path(ec);
+			if (ec)
+			{
+				throw std::runtime_error("无法确定当前程序路径");
+			}
 
-                        return current;
-                }
+			return current;
+		}
 
-                return fs::path(std::string(buffer.data(), static_cast<std::size_t>(length)));
+		return fs::path(std::string(buffer.data(), static_cast<std::size_t>(length)));
 #endif
-        }
+	}
 
-        fs::path locate_rtmpdump_executable(const ProgramConfig& programs)
-        {
-                for (const auto& candidate : programs.rtmpdump_search_paths)
-                {
-                        if (const auto found = resolve_rtmpdump_candidate(candidate))
-                        {
-                                return *found;
-                        }
-                }
+	fs::path locate_rtmpdump_executable(const ProgramConfig& programs)
+	{
+		for (const auto& candidate : programs.rtmpdump_search_paths)
+		{
+			if (const auto found = resolve_rtmpdump_candidate(candidate))
+			{
+				return *found;
+			}
+		}
 
-                const fs::path executable_path = get_current_executable_path();
-                fs::path executable_directory = executable_path;
-                {
-                        std::error_code ec;
-                        if (fs::is_regular_file(executable_path, ec) && !ec)
-                        {
-                                executable_directory = executable_path.parent_path();
-                        }
-                }
+		const fs::path executable_path = get_current_executable_path();
+		fs::path executable_directory = executable_path;
+		{
+			std::error_code ec;
+			if (fs::is_regular_file(executable_path, ec) && !ec)
+			{
+				executable_directory = executable_path.parent_path();
+			}
+		}
 
-                std::vector<fs::path> fallback_directories;
-                if (!executable_directory.empty())
-                {
-                        fallback_directories.push_back(executable_directory);
-                        const auto parent = executable_directory.parent_path();
-                        if (!parent.empty() && parent != executable_directory)
-                        {
-                                fallback_directories.push_back(parent);
-                        }
-                }
+		std::vector<fs::path> fallback_directories;
+		if (!executable_directory.empty())
+		{
+			fallback_directories.push_back(executable_directory);
+			const auto parent = executable_directory.parent_path();
+			if (!parent.empty() && parent != executable_directory)
+			{
+				fallback_directories.push_back(parent);
+			}
+		}
 
-                for (const auto& directory : fallback_directories)
-                {
-                        if (const auto found = find_rtmpdump_in_directory(directory))
-                        {
-                                return *found;
-                        }
-                }
+		for (const auto& directory : fallback_directories)
+		{
+			if (const auto found = find_rtmpdump_in_directory(directory))
+			{
+				return *found;
+			}
+		}
 
-                throw std::runtime_error(
-                        "无法找到 rtmpdump.exe，请检查配置文件中的 programs.rtmpdump_exe 或将 rtmpdump.exe 放在程序目录或上一级目录中");
-        }
+		throw std::runtime_error(
+			"无法找到 rtmpdump.exe，请检查配置文件中的 programs.rtmpdump_exe 或将 rtmpdump.exe 放在程序目录或上一级目录中");
+	}
 
 	PollingConfig parse_polling_config(json& config_json)
 	{
@@ -552,49 +552,49 @@ namespace
 		return request;
 	}
 
-        ProgramConfig parse_programs(const json& programs_json)
-        {
-                if (!programs_json.is_object())
-                {
-                        throw std::runtime_error("配置文件中的 programs 字段必须是对象");
-                }
+	ProgramConfig parse_programs(const json& programs_json)
+	{
+		if (!programs_json.is_object())
+		{
+			throw std::runtime_error("配置文件中的 programs 字段必须是对象");
+		}
 
-                ProgramConfig programs;
-                if (const auto it = programs_json.find("rtmpdump_exe"); it != programs_json.end())
-                {
-                        if (it->is_string())
-                        {
-                                programs.rtmpdump_search_paths.insert(
-                                        programs.rtmpdump_search_paths.begin(),
-                                        fs::path{ it->get<std::string>() });
-                        }
-                        else if (it->is_array())
-                        {
-                                std::vector<fs::path> configured_paths;
-                                configured_paths.reserve(it->size());
-                                for (const auto& value : *it)
-                                {
-                                        if (!value.is_string())
-                                        {
-                                                throw std::runtime_error(
-                                                        "配置文件中的 rtmpdump_exe 数组必须只包含字符串");
-                                        }
-                                        configured_paths.emplace_back(value.get<std::string>());
-                                }
+		ProgramConfig programs;
+		if (const auto it = programs_json.find("rtmpdump_exe"); it != programs_json.end())
+		{
+			if (it->is_string())
+			{
+				programs.rtmpdump_search_paths.insert(
+					programs.rtmpdump_search_paths.begin(),
+					fs::path{ it->get<std::string>() });
+			}
+			else if (it->is_array())
+			{
+				std::vector<fs::path> configured_paths;
+				configured_paths.reserve(it->size());
+				for (const auto& value : *it)
+				{
+					if (!value.is_string())
+					{
+						throw std::runtime_error(
+							"配置文件中的 rtmpdump_exe 数组必须只包含字符串");
+					}
+					configured_paths.emplace_back(value.get<std::string>());
+				}
 
-                                programs.rtmpdump_search_paths.insert(
-                                        programs.rtmpdump_search_paths.begin(),
-                                        configured_paths.begin(),
-                                        configured_paths.end());
-                        }
-                        else
-                        {
-                                throw std::runtime_error("配置文件中的 rtmpdump_exe 字段必须是字符串或字符串数组");
-                        }
-                }
+				programs.rtmpdump_search_paths.insert(
+					programs.rtmpdump_search_paths.begin(),
+					configured_paths.begin(),
+					configured_paths.end());
+			}
+			else
+			{
+				throw std::runtime_error("配置文件中的 rtmpdump_exe 字段必须是字符串或字符串数组");
+			}
+		}
 
-                return programs;
-        }
+		return programs;
+	}
 
 	TestModeConfig parse_test_mode(const json& test_mode_json)
 	{
@@ -616,61 +616,61 @@ namespace
 		return test_mode;
 	}
 
-        Config parse_config(const fs::path& path)
-        {
-                const auto file_content = read_file(path);
-                auto config_json = json::parse(file_content);
+	Config parse_config(const fs::path& path)
+	{
+		const auto file_content = read_file(path);
+		auto config_json = json::parse(file_content);
 
-                Config config;
-                config.host_id = config_json.at("host_id").get<std::string>();
-                config.request = parse_request(config_json.at("request"));
-                config.polling = parse_polling_config(config_json);
-                if (const auto it = config_json.find("programs"); it != config_json.end())
-                {
-                        config.programs = parse_programs(*it);
-                }
-                config.programs.rtmpdump_exe = locate_rtmpdump_executable(config.programs);
-                if (const auto it = config_json.find("test_mode"); it != config_json.end())
-                {
-                        config.test_mode = parse_test_mode(*it);
-                }
-                if (const auto it = config_json.find("http_debug"); it != config_json.end())
-                {
-                        if (!it->is_boolean())
-                        {
-                                throw std::runtime_error("配置文件中的 http_debug 字段必须是布尔值");
-                        }
-                        config.http_debug_enabled = it->get<bool>();
-                }
-                return config;
-        }
+		Config config;
+		config.host_id = config_json.at("host_id").get<std::string>();
+		config.request = parse_request(config_json.at("request"));
+		config.polling = parse_polling_config(config_json);
+		if (const auto it = config_json.find("programs"); it != config_json.end())
+		{
+			config.programs = parse_programs(*it);
+		}
+		config.programs.rtmpdump_exe = locate_rtmpdump_executable(config.programs);
+		if (const auto it = config_json.find("test_mode"); it != config_json.end())
+		{
+			config.test_mode = parse_test_mode(*it);
+		}
+		if (const auto it = config_json.find("http_debug"); it != config_json.end())
+		{
+			if (!it->is_boolean())
+			{
+				throw std::runtime_error("配置文件中的 http_debug 字段必须是布尔值");
+			}
+			config.http_debug_enabled = it->get<bool>();
+		}
+		return config;
+	}
 
-        size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
-        {
-                auto* stream = static_cast<std::string*>(userdata);
-                const auto count = size * nmemb;
-                stream->append(ptr, count);
-                return count;
-        }
+	size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
+	{
+		auto* stream = static_cast<std::string*>(userdata);
+		const auto count = size * nmemb;
+		stream->append(ptr, count);
+		return count;
+	}
 
-        size_t header_callback(char* buffer, size_t size, size_t nitems, void* userdata)
-        {
-                auto* stream = static_cast<std::string*>(userdata);
-                const auto count = size * nitems;
-                stream->append(buffer, count);
-                return count;
-        }
+	size_t header_callback(char* buffer, size_t size, size_t nitems, void* userdata)
+	{
+		auto* stream = static_cast<std::string*>(userdata);
+		const auto count = size * nitems;
+		stream->append(buffer, count);
+		return count;
+	}
 
-        struct HttpResponse
-        {
-                std::string body;
-                std::string headers;
-        };
+	struct HttpResponse
+	{
+		std::string body;
+		std::string headers;
+	};
 
-        class CurlHttpClient
-        {
-        public:
-                explicit CurlHttpClient(const Config& config)
+	class CurlHttpClient
+	{
+	public:
+		explicit CurlHttpClient(const Config& config)
 		{
 			curl_ = curl_easy_init();
 			if (!curl_)
@@ -679,11 +679,11 @@ namespace
 			}
 
 			// 配置基础选项，只需设置一次
-                        curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, write_callback);
-                        curl_easy_setopt(curl_, CURLOPT_HEADERFUNCTION, header_callback);
-                        curl_easy_setopt(curl_, CURLOPT_ACCEPT_ENCODING, "");
+			curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, write_callback);
+			curl_easy_setopt(curl_, CURLOPT_HEADERFUNCTION, header_callback);
+			curl_easy_setopt(curl_, CURLOPT_ACCEPT_ENCODING, "");
 #ifdef CURLOPT_TCP_KEEPALIVE
-                        curl_easy_setopt(curl_, CURLOPT_TCP_KEEPALIVE, 1L);
+			curl_easy_setopt(curl_, CURLOPT_TCP_KEEPALIVE, 1L);
 #endif
 #ifdef CURLOPT_TCP_KEEPIDLE
 			curl_easy_setopt(curl_, CURLOPT_TCP_KEEPIDLE, 60L);
@@ -722,24 +722,24 @@ namespace
 			}
 		}
 
-                HttpResponse perform_request(const Config& config)
-                {
-                        if (!curl_)
-                        {
-                                throw std::runtime_error("libcurl 会话尚未初始化");
-                        }
+		HttpResponse perform_request(const Config& config)
+		{
+			if (!curl_)
+			{
+				throw std::runtime_error("libcurl 会话尚未初始化");
+			}
 
-                        apply_timeout(config.request.timeout_seconds);
+			apply_timeout(config.request.timeout_seconds);
 
-                        std::string response;
-                        std::string response_headers;
-                        curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &response);
-                        curl_easy_setopt(curl_, CURLOPT_HEADERDATA, &response_headers);
+			std::string response;
+			std::string response_headers;
+			curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &response);
+			curl_easy_setopt(curl_, CURLOPT_HEADERDATA, &response_headers);
 
-                        char* escaped_host_id = curl_easy_escape(curl_, config.host_id.c_str(), 0);
-                        if (!escaped_host_id)
-                        {
-                                throw std::runtime_error("无法对 host_id 进行 URL 编码");
+			char* escaped_host_id = curl_easy_escape(curl_, config.host_id.c_str(), 0);
+			if (!escaped_host_id)
+			{
+				throw std::runtime_error("无法对 host_id 进行 URL 编码");
 			}
 
 			std::ostringstream url_stream;
@@ -760,18 +760,18 @@ namespace
 			long status_code = 0;
 			curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &status_code);
 			if (status_code != 200)
-                        {
-                                std::ostringstream error;
-                                error << "HTTP 响应状态码异常: " << status_code;
-                                throw std::runtime_error(error.str());
-                        }
+			{
+				std::ostringstream error;
+				error << "HTTP 响应状态码异常: " << status_code;
+				throw std::runtime_error(error.str());
+			}
 
-                        return HttpResponse{ std::move(response), std::move(response_headers) };
-                }
+			return HttpResponse{ std::move(response), std::move(response_headers) };
+		}
 
-        private:
-                void apply_timeout(long timeout_seconds)
-                {
+	private:
+		void apply_timeout(long timeout_seconds)
+		{
 			curl_easy_setopt(curl_, CURLOPT_TIMEOUT, timeout_seconds);
 		}
 
@@ -1067,13 +1067,13 @@ int main()
 #endif
 	try
 	{
-                const fs::path config_path = "config.json";
-                Config config = parse_config(config_path);
+		const fs::path config_path = "config.json";
+		Config config = parse_config(config_path);
 
-                std::cout << "已定位 rtmpdump 可执行文件: " << config.programs.rtmpdump_exe.string() << '\n';
+		std::cout << "已定位 rtmpdump 可执行文件: " << config.programs.rtmpdump_exe.string() << '\n';
 
-                if (config.test_mode.enabled)
-                {
+		if (config.test_mode.enabled)
+		{
 			if (config.test_mode.fake_room_id.empty())
 			{
 				throw std::runtime_error("测试模式启用但未提供 fake_room_id");
@@ -1093,17 +1093,17 @@ int main()
 		while (true)
 		{
 			std::optional<std::string> room_id;
-                        try
-                        {
-                                const auto response = http_client.perform_request(config);
-                                if (config.http_debug_enabled)
-                                {
-                                        std::cout << "HTTP 响应头:\n" << response.headers;
-                                        std::cout << "HTTP 响应体: " << response.body << '\n';
-                                }
+			try
+			{
+				const auto response = http_client.perform_request(config);
+				if (config.http_debug_enabled)
+				{
+					std::cout << "HTTP 响应头:\n" << response.headers;
+					std::cout << "HTTP 响应体: " << response.body << '\n';
+				}
 
-                                const auto response_json = json::parse(response.body);
-                                room_id = extract_room_id(response_json);
+				const auto response_json = json::parse(response.body);
+				room_id = extract_room_id(response_json);
 
 				if (!room_id)
 				{
