@@ -4,9 +4,9 @@
     "09:30",
     "17:00"
   ],
-  "accelerated_request_offset_minutes": 30,
-  "accelerated_wait_seconds": 60,
-  "normal_wait_seconds": 300,
+  "accelerated_request_offset_minutes": 60,
+  "accelerated_wait_seconds": 15,
+  "normal_wait_seconds": 30,
   "request": {
     "base_url": "https://live-mall.xiaohongshu.com/api/sns/red/livemall/app/dynamic/host/info",
     "headers": {
