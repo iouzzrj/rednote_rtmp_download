@@ -16,8 +16,12 @@ rtmpdump -r "rtmp://live.xhscdn.com/live/569971301260745429" -o output.flv --liv
 
 让ffmpeg转码，VLC可以播放
 ffmpeg -hide_banner -fflags +genpts -probesize 100M -analyzeduration 100M -i output.flv -c copy out.mkv
+ffmpeg -fflags +genpts+igndts+discardcorrupt -err_detect ignore_err -avoid_negative_ts make_zero -i "input.flv" -c copy -map 0 out_fixed.mkv
 
+查看单独packet
+ffprobe -hide_banner -show_packets -select_streams v -print_format json yourfile.flv > file1.json
 
+curl 模拟
 curl -i -G 'https://live-mall.xiaohongshu.com/api/sns/red/livemall/app/dynamic/host/info' `
   --data-urlencode 'host_id=5b687ad9c39aaf000120eb98' `
   -H 'Host: live-mall.xiaohongshu.com' `
@@ -39,3 +43,13 @@ curl -i -G 'https://live-mall.xiaohongshu.com/api/sns/red/livemall/app/dynamic/h
   -H 'referer: https://app.xhs.cn/' `
   -H 'accept-encoding: gzip, deflate' `
   --compressed
+
+
+INFO:   filesize              0.00
+INFO:   server                TLSS/2.0.0(qcloud)
+INFO:   server_version        2.0.0
+393836.206 kB / 5713.12 seccc
+ERROR: Closing connection: NetStream.Play.StreamNotFound
+393886.476 kB / 5716.28 sec
+Download complete
+这是直播完毕的信息
