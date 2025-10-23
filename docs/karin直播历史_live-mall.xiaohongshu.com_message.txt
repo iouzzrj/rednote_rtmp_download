@@ -1,0 +1,41 @@
+GET /api/sns/red/livemall/app/dynamic/overview/list?host_id=5b687ad9c39aaf000120eb98&page=1&page_size=7 h2
+host: live-mall.xiaohongshu.com
+xy-direction: 2
+x-b3-traceid: 949499c3da1c090f
+x-xray-traceid: ccf6e3e2ccf21ac86278ec3268a38be2
+xy-scene: fs=0&point=789
+x-legacy-did: c90c36d9-e241-3a36-9452-e9b6507ab5c2
+x-legacy-fid: 17551017151098354944b753319f4dbc9ed5a0f718ae
+x-legacy-sid: session.1757063893546502696766
+x-mini-gid: 7cf138a2a6d0543d0eb19cf80a20ce0a43cec3d9473591bb778637a1
+x-mini-s1: ABkCAAABMZIxoIjdaVROMkDvmebsaBAg5FVXUXJTzwn7FyjxfuCiH/82/FBwNF7DHMZ83SNeDvvlpsNWbZU=
+x-mini-sig: 9a03cc4a894bdc11ffdf72e14629ac08bf5dc9c8c51b5fffe9c5f1ae15df6304
+x-mini-mua: eyJhIjoiRUNGQUFGMDEiLCJjIjo1MzcsImsiOiJlMmE3OWJkYzYwYmNlYWU5MTRiZTAxNGYxOWRmMmI0NDAxMjRkNTYxY2I2ZmY2MzM4NDYyY2QxNzNmMWQ5NzY0IiwicCI6ImEiLCJzIjoiNzNjZmJkN2M3YjcyMTcxMjRlMzNjMjdkNjdlNTFhMjk0NzQzODg4NjYxNjAyOTEwZDI1YWY0NTVhNWRlYzgwMzk3ODYwYjk3OTJhNzIwN2EzOWIxZTg4ODUyYmIyNDQ5ZjVlODg0YjhjMDhmNDMxZjdhMzBkNGY3OWQwYjk2MmIiLCJ0Ijp7ImMiOjE0NTIsImQiOjYsImYiOjAsInMiOjQwOTgsInQiOjE1NDYyMDY5MCwidHQiOlsxXX0sInUiOiIwMDAwMDAwMDgwMzhjMDlkYzIyZDk2Y2U4ZjlhYjM2MDQ3MDgzZTVhIiwidiI6IjIuOS4yNzMxIn0.XAAkJHGiTGfOlnwbKoepi6z-oaikl8LxxWc1rjMRMe1_rW4nm41CRIIMvbbZwq8ClxndC5WnG0OeRvFZgDbcCT-vOZ5Gft3B_6TTOHa_qpk5YHRFktc5gip8ExLYNmo9OAA7ClpIWjVsntaL6Wy0_hNsj-jCFdYJR9kfz0EHGrjfNytDNsdE7yiS6__noWkQEml22X-TP2ZrOZWVKSAEaNzEWPOcZboxdNGdbb51p74i7lzbCHAfBOye0VeI2pH8XKXrNl3x4Qb5VtHq6xyME7hBIdvrL7cgebEwiCyV5gjoM0036dO9QmNWOQ6RrW2S82S_LFvu2RDtKgl57XBv2Uno6RhxKAeVuQhA86egNMj4EhL2bb14WRqvw_ZGjgFZSr-Ro75upY3dZh159undfNY2hefxE-dhl64P6jJxYHKoZ3GZFexF2W-SePqGUgyLMUTZ4b74pgHxqOIFohCYoJBtJkVDwGP2RkMfP5qvGUZi-mROKufyohymVLi1KJy_5CmENRAEbMwedw9lbDKlSGnA6L--JV6xKywH9ziQ6fkTUaBr7kWlV8ZpoS4HWS1QLZ-77zZxHEl_GwqnAc1AQ1GA8gR3zXE83XHC3PKjQIR-Sir5LSgz_fLfyQ1miTmalhJW6Hp9a9s269P_I1Ph2WfxCIojOyexlHtcSO1QK_OqP6D_OePRCTF5ZdAohKmsYod6thaxZt39kd1DBiQJ3wEJVth55BWcLNn-MUbkjN2KOwtFyfrojAatGnizOwzpAqZ-6NjaKMTwbqzuMn1KG0r7GAaq53-oo2vNfOXXJvJDOyWHwpyOqWckyiiY8GxaIU2VzrvjFCHHFOb5aJ7Z5W_V_Zr7p5DnzIwhI3jUp9Y9jOO1I3IbUQ9q8p0MvdrsYfqnDomohlRfogAD3Hv3F2CrE8-25b5SmyCSgs_zzgXtTF_uZdax8-ol-IoksR9OKmvGvY0NFP4o85ZVbHoIH346V25_yF21j-nMD5smvB7I75iRkm2UezVNxUwB_znMP5ABtt_CtBrf_E-NVbCeiBaXrvnLXfTCrcG1YgUclAIY5dliUjMbFwCEvGPMJJToa7YyxQFdQP_TYWgf4N1pZeQeVwC7uQ2hkFjcsDc3Le0fDG-5i7ceuP-7wsls4RBLm5JSHL0Cg3cfQSSr5NJmdhj8JHGp-4ZrijtjgWN76EoAfpkw2fzjAs4TidGxm5Tt1zmTGYqXjmJEaXl0SrN4HZblNc-3lDGaRyYQJOSA8MpqtvmEVOGpzuSgBG_5912Br1t52xIhYuHK8uG2_hLr6nDMlAw0vWghi1vybzXc4_QC55MbNu2ESTifedm1G1NvOkyMfRzJyI-C8q15o1O2YA.
+xy-common-params: fid=17551017151098354944b753319f4dbc9ed5a0f718ae&gid=7cf138a2a6d0543d0eb19cf80a20ce0a43cec3d9473591bb778637a1&device_model=phone&tz=Asia%2FShanghai&channel=jlight&versionName=8.96.0&deviceId=c90c36d9-e241-3a36-9452-e9b6507ab5c2&platform=android&sid=session.1757063893546502696766&identifier_flag=4&project_id=ECFAAF&x_trace_page_current=user_page&lang=zh-Hans&app_id=ECFAAF01&uis=light&teenager=0&active_ctry=CN&cpu_name=qcom&dlang=zh&data_ctry=CN&SUE=1&launch_id=1760626617&origin_channel=jlight&overseas_channel=0&mlanguage=zh_cn&folder_type=none&auto_trans=0&t=1760630914&build=8960817&holder_ctry=CN&did=5e040bd8d68c455a94fb963f2b18e622
+user-agent: Dalvik/2.1.0 (Linux; U; Android 14; XQ-DE72 Build/67.1.F.2.220) Resolution/1080*2520 Version/8.96.0 Build/8960817 Device/(Sony;XQ-DE72) discover/8.96.0 NetType/Unknown
+shield: XYAAQAAwAAAAEAAABTAAAAUzUWEe0xG1IbD9/c+qCLOlKGmTtFa+lG434HeuFeRaoRzITjnbAzRZ2t/eRez8N738t+2KY3EgwbGDeOYbvzjXll1ebsi+yNkUzm627xdtmhsQ1C
+xy-platform-info: platform=android&build=8960817&deviceId=c90c36d9-e241-3a36-9452-e9b6507ab5c2
+referer: https://app.xhs.cn/
+accept-encoding: gzip, deflate
+
+h2 200
+date: Thu, 16 Oct 2025 16:08:35 GMT
+content-type: application/json; charset=utf-8
+alt-svc: h3=":443"; ma=2592000, h3-29=":443"; ma=2592000, h3-27=":443"; ma=2592000, h3-Q050=":443"; ma=2592000, h3-Q046=":443"; ma=2592000, h3-Q043=":443"; ma=2592000, h3-Q039=":443"; ma=2592000, quic=":443"; ma=2592000; v="39,43,46"
+server: nginx
+set-cookie: acw_tc=0ad5860617606309152384023e15d51689d4c4bddde1363e68abbe3ce21e98;path=/;HttpOnly;Max-Age=1800
+cat-msg-id: karen-gateway-livemall-0a25870f.20628-489059-3256994
+request-id: 949499c3da1c090f
+xhs-request-time: 0.294
+content-encoding: gzip
+xhs-real-ip: 110.253.177.114
+
+{"msg":"成功","data":{"dynamic_empty_info":{"button_deep_link":"xhsdiscover://api_request?path=/api/sns/red/livemall/app/dynamic/overview/seek&method=post&param={\"seek_type\":\"public\",\"host_id\":\"5b687ad9c39aaf000120eb98\"}","button_type":0,"type":1,"icon":"https://picasso-static.xiaohongshu.com/fe-platform/286c7476ec1c1c856cac30daa24642d58539b17c.png","content":"主播隐藏了直播回放，快去请TA公开","button_content":"求公开"},"entrance_show_status":2,"live_dynamic_room_list":[
+
+{"dynamic_show_hide_button":false,"timestamp":1760610779000,"goods_details":[],"month_of_year":202510,"formatted_date":"10月16日","explain_goods_count":0,"room_id":569970102503949074,"title":"单身","clip_list":[],"formatted_time":"18:32","dynamic_show_status":2},
+{"explain_goods_count":0,"dynamic_show_hide_button":false,"clip_list":[],"goods_details":[],"month_of_year":202510,"formatted_date":"10月16日","formatted_time":"10:00","dynamic_show_status":0,"room_id":569969586455224067,"timestamp":1760580023000,"title":"单身"},
+{"room_id":569968719744246840,"timestamp":1760528362000,"title":"单身","formatted_date":"10月15日","dynamic_show_status":2,"dynamic_show_hide_button":false,"clip_list":[],"goods_details":[],"month_of_year":202510,"formatted_time":"19:39","explain_goods_count":0},
+{"dynamic_show_status":2,"dynamic_show_hide_button":false,"room_id":569968144185077277,"timestamp":1760494065000,"title":"单身","goods_details":[],"formatted_date":"10月15日","formatted_time":"10:07","clip_list":[],"month_of_year":202510,"explain_goods_count":0},
+{"room_id":569967212177483181,"timestamp":1760438512000,"title":"单身","goods_details":[],"explain_goods_count":0,"clip_list":[],"month_of_year":202510,"formatted_date":"10月14日","formatted_time":"18:41","dynamic_show_status":2,"dynamic_show_hide_button":false},
+{"room_id":569966732632357877,"timestamp":1760409940000,"clip_list":[],"goods_details":[],"formatted_date":"10月14日","explain_goods_count":0,"dynamic_show_status":2,"dynamic_show_hide_button":false,"title":"单身","month_of_year":202510,"formatted_time":"10:45"},
+{"dynamic_show_hide_button":false,"room_id":569962670735792623,"timestamp":1760167935000,"clip_list":[],"goods_details":[],"explain_goods_count":0,"title":"单身","month_of_year":202510,"formatted_date":"10月11日","formatted_time":"15:32","dynamic_show_status":2}],"total_count":15,"month_live_overview_list":[{"month_of_year":202510,"live_count":8,"year":2025,"month_title":"2025年10月"},{"month_title":"2025年7月","month_of_year":202507,"live_count":7,"year":2025}]},"code":0,"success":true}
