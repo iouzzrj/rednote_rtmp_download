@@ -10,6 +10,9 @@ http://live.xhscdn.com/live/569969586455224067.flv
 http://live-source-play-bak-hw.xhscdn.com/live/569969586455224067.flv
 http://live-source-play.xhscdn.com/live/569971033624755876.flv
 
+这个是 redlive.xiaohongshu.com 暴露出来的直播链接。使用 h265 而不是默认 .flv 的 h264，码率也更高
+https://live-source-play-hw.xhscdn.com/live/569992765504845111_orig.flv
+
 
 ttmpdump直接输出的flv，ffplay能播放，但是VLC不识别flv中的HEVC编码，需要之后转码
 rtmpdump -r "rtmp://live.xhscdn.com/live/569971301260745429" -o output.flv --live
