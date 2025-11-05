@@ -28,7 +28,6 @@ curl 模拟
 curl -i -G 'https://live-mall.xiaohongshu.com/api/sns/red/livemall/app/dynamic/host/info' `
   --data-urlencode 'host_id=5b687ad9c39aaf000120eb98' `
   -H 'Host: live-mall.xiaohongshu.com' `
-  -H 'xy-direction: 2' `
   -H 'x-b3-traceid: a5a591c7d3190200' `
   -H 'x-xray-traceid: ccf6e3e2cd721ac95cddb61e303ab50e' `
   -H 'xy-scene: fs=0&point=789' `
@@ -47,6 +46,7 @@ curl -i -G 'https://live-mall.xiaohongshu.com/api/sns/red/livemall/app/dynamic/h
   -H 'accept-encoding: gzip, deflate' `
   --compressed
 
+注：请求 header 会更新
 
 INFO:   filesize              0.00
 INFO:   server                TLSS/2.0.0(qcloud)
